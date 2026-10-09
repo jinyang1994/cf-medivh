@@ -1,0 +1,22 @@
+# Local state, dependencies, build output, and generated lock files.
+.git/
+.agents/
+.codex/
+.aws/
+.wrangler/
+**/node_modules/
+**/dist/
+**/coverage/
+data/
+**/.env
+**/.env.*
+**/*.sqlite*
+**/*.db*
+**/package-lock.json
+**/*.tsbuildinfo
+
+# Preserve the official shadcn CLI components and theme unchanged.
+web/src/components/ui/
+web/src/index.css
+web/src/lib/utils.ts
+web/components.json

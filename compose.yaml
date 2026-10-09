@@ -1,0 +1,26 @@
+services:
+  medivh:
+    build: .
+    restart: unless-stopped
+    stop_grace_period: 2m
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      DATABASE_PATH: /app/data/billing.sqlite
+      PORT: 8788
+    ports:
+      - '127.0.0.1:8788:8788'
+    volumes:
+      - billing-data:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8788/api/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+volumes:
+  billing-data:

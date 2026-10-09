@@ -1,0 +1,136 @@
+import { ArrowUpRight } from 'lucide-react';
+import { NavLink } from 'react-router';
+import { BillingChart } from '@/components/billing/billing-chart';
+import { HistoryTable } from '@/components/billing/history-table';
+import { MetricCard } from '@/components/billing/metric-card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { BILLING_PATHS } from '@/constants/billing-navigation';
+import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
+import { date, money, shortDate } from '@/utils/format';
+import { serviceTotals } from '@/utils/service-totals';
+
+export function OverviewPage() {
+  const data = useBillingDashboard();
+  const { totals, currency } = data;
+  const baseFee = data.cycle?.baseFee ?? 0;
+  const latestComparison = data.history
+    .filter((item) => item.officialTotal !== null && item.localTotal !== null)
+    .at(-1);
+  return (
+    <>
+      <section aria-label="周期费用" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          title="当前周期费用"
+          value={money(totals.current, currency, true)}
+          main
+          detail={
+            totals.current === null
+              ? '等待官方账单或完整用量'
+              : `历史官方 + 今日实时${baseFee > 0 ? ` · 含订阅 ${money(baseFee, currency)}` : ''}`
+          }
+        />
+        <MetricCard
+          title="今日实时费用"
+          value={money(totals.todayLocal, currency, true)}
+          detail={`${data.today} · 本地估算`}
+        />
+        <MetricCard
+          title="历史官方累计"
+          value={money(totals.officialHistorical, currency, true)}
+          detail={
+            totals.officialThrough
+              ? `截至 ${date(totals.officialThrough)}${baseFee > 0 && totals.officialHistorical !== null ? ` · 用量 ${money(totals.officialHistorical - baseFee, currency, true)} + 订阅 ${money(baseFee, currency)}` : ''}`
+              : '等待官方汇总'
+          }
+        />
+        <MetricCard
+          title="本地累计费用"
+          value={money(totals.localCumulative, currency, true)}
+          detail={`截至 ${data.today} · ${totals.localCumulative !== null ? '本地估算' : '用量待补全'}`}
+        />
+      </section>
+      <BillingChart data={data} />
+      <section className="grid items-start gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>服务费用</CardTitle>
+              <Button variant="ghost" size="sm" asChild>
+                <NavLink to={BILLING_PATHS.services}>
+                  全部明细
+                  <ArrowUpRight />
+                </NavLink>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>服务</TableHead>
+                  <TableHead className="text-right">今日</TableHead>
+                  <TableHead className="text-right">周期累计</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {serviceTotals(data.services)
+                  .slice(0, 8)
+                  .map((item) => (
+                    <TableRow key={item.service}>
+                      <TableCell className="font-medium">{item.service}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {money(item.todayCost, currency, true)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {money(item.currentCost, currency, true)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {data.services.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                      暂无服务用量
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>最近核对</CardTitle>
+              <Button variant="ghost" size="sm" asChild>
+                <NavLink to={BILLING_PATHS.history}>
+                  每日明细
+                  <ArrowUpRight />
+                </NavLink>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <span className="text-sm text-muted-foreground">
+                本地 − 官方{latestComparison ? ` · ${shortDate(latestComparison.date)}` : ''}
+              </span>
+              <span className="text-xl font-semibold tabular-nums">
+                {money(totals.difference, currency, true)}
+              </span>
+            </div>
+            <HistoryTable data={data} limit={5} />
+          </CardContent>
+        </Card>
+      </section>
+    </>
+  );
+}

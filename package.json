@@ -1,0 +1,22 @@
+{
+  "name": "cf-medivh",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "setup": "npm ci && npm --prefix server ci && npm --prefix web ci",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix server run build && npm --prefix web run build",
+    "start": "npm --prefix server start",
+    "test": "npm --prefix server test",
+    "check": "npm --prefix server run typecheck && npm --prefix web run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.9"
+  }
+}

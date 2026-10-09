@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+node_modules
+**/node_modules
+**/dist
+data
+**/*.sqlite*
+**/*.db*
+.wrangler
