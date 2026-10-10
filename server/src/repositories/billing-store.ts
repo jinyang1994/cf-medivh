@@ -186,12 +186,15 @@ export class Store {
     );
   }
   /** Read only the evidence needed by the one-time timeline recovery, excluding large raw analytics. */
-  usageSnapshotEvidence(cycleId: string): HistoricalUsageSnapshot[] {
+  usageSnapshotEvidence(
+    cycleId: string,
+    bounds?: { start: string; end: string; observedThrough: string },
+  ): HistoricalUsageSnapshot[] {
     const rows = this.db
       .prepare(
-        "SELECT id,date,observed_at,complete,json_extract(payload,'$.meters') AS meters,json_extract(payload,'$.source') AS source,json_extract(payload,'$.raw.corrections') AS corrections FROM usage_snapshots WHERE cycle_id=? ORDER BY id",
+        `SELECT id,date,observed_at,complete,json_extract(payload,'$.meters') AS meters,json_extract(payload,'$.source') AS source,json_extract(payload,'$.raw.corrections') AS corrections FROM usage_snapshots WHERE cycle_id=?${bounds ? ' AND date>=? AND date<? AND julianday(observed_at)<=julianday(?)' : ''} ORDER BY id`,
       )
-      .all(cycleId) as {
+      .all(cycleId, ...(bounds ? [bounds.start, bounds.end, bounds.observedThrough] : [])) as {
       id: number;
       date: string;
       observed_at: string;

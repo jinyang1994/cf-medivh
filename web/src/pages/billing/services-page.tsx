@@ -1,3 +1,5 @@
+import { ChartLine } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
@@ -8,10 +10,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
+import { serviceTrendPath } from '@/constants/billing-navigation';
 import { money, quantity } from '@/utils/format';
 
 export function ServicesPage() {
   const data = useBillingDashboard();
+  const navigate = useNavigate();
   const services = [...data.services].sort(
     (a, b) => a.service.localeCompare(b.service) || b.cost - a.cost,
   );
@@ -23,6 +27,7 @@ export function ServicesPage() {
         <h2 className="text-2xl font-semibold tracking-tight">服务明细</h2>
         <span className="text-sm text-muted-foreground">
           截至 {data.today} · {data.totals.localCumulative === null ? '部分用量' : '用量估算'}
+          {' · 点击计费项查看趋势'}
         </span>
       </div>
       <Card>
@@ -41,10 +46,28 @@ export function ServicesPage() {
             </TableHeader>
             <TableBody>
               {services.map((item) => (
-                <TableRow key={item.key}>
+                <TableRow
+                  key={item.key}
+                  className="group cursor-pointer"
+                  onClick={(event) => {
+                    if (!(event.target as HTMLElement).closest('a, button'))
+                      void navigate(serviceTrendPath(item.service, item.key));
+                  }}
+                >
                   <TableCell>
-                    <div className="font-medium">{item.service}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">{item.name}</div>
+                    <NavLink
+                      to={serviceTrendPath(item.service, item.key)}
+                      aria-label={`查看 ${item.service} · ${item.name} 趋势`}
+                      className="inline-flex items-center gap-3 rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <span>
+                        <span className="block font-medium">{item.service}</span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {item.name}
+                        </span>
+                      </span>
+                      <ChartLine className="size-4 text-muted-foreground" aria-hidden="true" />
+                    </NavLink>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     <div>{quantity(item.quantity)}</div>

@@ -1,4 +1,4 @@
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ChartLine } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { BillingChart } from '@/components/billing/billing-chart';
 import { HistoryTable } from '@/components/billing/history-table';
@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BILLING_PATHS } from '@/constants/billing-navigation';
+import { BILLING_PATHS, serviceTrendPath } from '@/constants/billing-navigation';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
 import { date, money, shortDate } from '@/utils/format';
 import { serviceTotals } from '@/utils/service-totals';
@@ -87,7 +87,16 @@ export function OverviewPage() {
               <TableBody>
                 {services.slice(0, 8).map((item) => (
                   <TableRow key={item.service}>
-                    <TableCell className="font-medium">{item.service}</TableCell>
+                    <TableCell className="font-medium">
+                      <NavLink
+                        to={serviceTrendPath(item.service)}
+                        aria-label={`查看 ${item.service} 费用趋势`}
+                        className="inline-flex items-center gap-2 rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {item.service}
+                        <ChartLine className="size-4 text-muted-foreground" aria-hidden="true" />
+                      </NavLink>
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {money(item.todayCost, currency, true)}
                     </TableCell>

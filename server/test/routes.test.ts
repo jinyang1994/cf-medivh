@@ -96,6 +96,71 @@ test('GET dashboard reads the local snapshot without starting collection', async
   assert.equal(body.collection.nextRun, '2026-10-08T12:10:00.000Z');
 });
 
+test('GET service trend is read-only and validates service and optional meter selection', async (t) => {
+  const { store, request } = await fixture(t);
+  assert.equal((await request('/api/service-trend?service=Containers')).status, 404);
+  const cycle = {
+    id: 'trend-route',
+    start: '2026-10-01',
+    end: '2026-10-04',
+    currency: 'USD',
+    baseFee: 5,
+  };
+  store.saveCycle(cycle);
+  store.saveUsage(
+    cycle,
+    {
+      date: '2026-10-01',
+      observedAt: '2026-10-01T00:01:00Z',
+      complete: true,
+      meters: [
+        {
+          key: 'memory',
+          service: 'Containers',
+          name: '内存',
+          unit: 'GiB-seconds',
+          quantity: 12,
+          pricing: { currency: 'USD', unitPrice: 1, unitSize: 1, includedQuantity: 10 },
+        },
+      ],
+    },
+    true,
+  );
+  const before = store.db.prepare('SELECT total_changes() AS count').get();
+  for (const suffix of ['', '&meter=memory']) {
+    const response = await request('/api/service-trend?service=Containers' + suffix);
+    assert.equal(response.status, 200);
+    assertHeaders(response, true);
+    const body = await response.json();
+    assert.equal(body.service, 'Containers');
+    assert.equal(body.meterKey, suffix ? 'memory' : null);
+    assert.equal(body.history[0].localCost, 2);
+    assert.equal(body.history[0].quantity, suffix ? 12 : null);
+  }
+  for (const query of [
+    '',
+    '?meter=memory',
+    '?service=',
+    '?service=Containers&meter=',
+    '?service=Containers&service=Workers',
+    '?service=Containers&meter=memory&meter=memory',
+    '?service=Containers&unknown=1',
+    '?service=%20',
+  ])
+    assert.equal((await request('/api/service-trend' + query)).status, 400, query);
+  for (const query of [
+    '?service=Missing',
+    '?service=Workers&meter=memory',
+    '?service=Containers&meter=missing',
+  ])
+    assert.equal((await request('/api/service-trend' + query)).status, 404, query);
+  assert.equal(
+    (await request('/api/service-trend?service=Containers', { method: 'POST' })).status,
+    404,
+  );
+  assert.deepEqual(store.db.prepare('SELECT total_changes() AS count').get(), before);
+});
+
 test('dashboard accepts only GET, and unmatched API paths preserve JSON 404 responses', async (t) => {
   const { request } = await fixture(t);
   const cases = [

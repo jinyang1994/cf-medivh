@@ -98,6 +98,26 @@ export interface BillingPoint {
   source?: 'collected' | 'reconstructed';
 }
 
+export interface ServiceTrendPoint {
+  timestamp: string;
+  observedAt: string | null;
+  localCost: number | null;
+  officialCost: number | null;
+  /** Cumulative cycle usage; only available when a single meter is selected. */
+  quantity: number | null;
+}
+
+export interface ServiceTrend {
+  cycle: BillingCycle;
+  service: string;
+  meterKey: string | null;
+  name: string;
+  unit: string | null;
+  currency: string;
+  history: ServiceTrendPoint[];
+  timeline: ServiceTrendPoint[];
+}
+
 export interface BillingNotification {
   /** Optional for compatibility with previously queued successful collections. */
   kind?: 'billing';

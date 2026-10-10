@@ -1,8 +1,15 @@
 export const BILLING_PATHS = {
   overview: '/billing',
   services: '/billing/services',
+  serviceTrend: '/billing/services/trend',
   history: '/billing/history',
 } as const;
+
+export function serviceTrendPath(service: string, meter?: string) {
+  const query = new URLSearchParams({ service });
+  if (meter) query.set('meter', meter);
+  return `${BILLING_PATHS.serviceTrend}?${query}`;
+}
 
 export const BILLING_NAVIGATION = [
   [BILLING_PATHS.overview, '当前账单'],

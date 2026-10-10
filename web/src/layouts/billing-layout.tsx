@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BillingLoading } from '@/components/billing/billing-loading';
-import { BILLING_NAVIGATION } from '@/constants/billing-navigation';
+import { BILLING_NAVIGATION, BILLING_PATHS } from '@/constants/billing-navigation';
 import { useDashboard } from '@/hooks/use-dashboard';
 import type { BillingDashboardContext } from '@/types/billing';
 import { date, inclusiveEnd, timestamp } from '@/utils/format';
@@ -37,11 +37,16 @@ export function BillingLayout() {
             {BILLING_NAVIGATION.map(([path, label]) => (
               <Button
                 key={path}
-                variant={pathname === path ? 'secondary' : 'ghost'}
+                variant={
+                  pathname === path ||
+                  (path === BILLING_PATHS.services && pathname.startsWith(`${path}/`))
+                    ? 'secondary'
+                    : 'ghost'
+                }
                 size="sm"
                 asChild
               >
-                <NavLink to={path} end>
+                <NavLink to={path} end={path !== BILLING_PATHS.services}>
                   {label}
                 </NavLink>
               </Button>
