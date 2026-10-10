@@ -15,6 +15,8 @@ export function ServicesPage() {
   const services = [...data.services].sort(
     (a, b) => a.service.localeCompare(b.service) || b.cost - a.cost,
   );
+  const hasEstimatedServiceCost = services.some((item) => item.currentCost == null);
+  const estimateLabel = data.totals.localCumulative === null ? '部分用量估算' : '本地估算';
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -72,7 +74,12 @@ export function ServicesPage() {
                     {money(item.cost, data.currency, true)}
                   </TableCell>
                   <TableCell className="text-right font-medium tabular-nums">
-                    {money(item.currentCost, data.currency, true)}
+                    {money(item.currentCost ?? item.cost, data.currency, true)}
+                    {item.currentCost == null && (
+                      <div className="mt-1 text-xs font-normal text-muted-foreground">
+                        {estimateLabel}
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -85,6 +92,11 @@ export function ServicesPage() {
               )}
             </TableBody>
           </Table>
+          {hasEstimatedServiceCost && (
+            <p className="mt-4 text-xs text-muted-foreground">
+              标注估算的金额按已有用量计算；用量不全可能低估，服务合计可能与官方校正总额不同。
+            </p>
+          )}
         </CardContent>
       </Card>
     </>

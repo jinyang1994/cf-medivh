@@ -11,7 +11,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "npm --prefix server run build && npm --prefix web run build",
     "start": "npm --prefix server start",
-    "test": "npm --prefix server test",
+    "test": "npm --prefix server test && npm --prefix web test",
     "check": "npm --prefix server run typecheck && npm --prefix web run build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

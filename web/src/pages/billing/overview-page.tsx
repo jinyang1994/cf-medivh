@@ -21,6 +21,9 @@ import { serviceTotals } from '@/utils/service-totals';
 export function OverviewPage() {
   const data = useBillingDashboard();
   const { totals, currency } = data;
+  const services = serviceTotals(data.services);
+  const hasEstimatedServiceCost = services.some((item) => item.currentCost === null);
+  const estimateLabel = totals.localCumulative === null ? '部分用量估算' : '本地估算';
   const baseFee = data.cycle?.baseFee ?? 0;
   const latestComparison = data.history
     .filter((item) => item.officialTotal !== null && item.localTotal !== null)
@@ -82,19 +85,20 @@ export function OverviewPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {serviceTotals(data.services)
-                  .slice(0, 8)
-                  .map((item) => (
-                    <TableRow key={item.service}>
-                      <TableCell className="font-medium">{item.service}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {money(item.todayCost, currency, true)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {money(item.currentCost, currency, true)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {services.slice(0, 8).map((item) => (
+                  <TableRow key={item.service}>
+                    <TableCell className="font-medium">{item.service}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {money(item.todayCost, currency, true)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {money(item.currentCost ?? item.cost, currency, true)}
+                      {item.currentCost === null && (
+                        <div className="mt-1 text-xs text-muted-foreground">{estimateLabel}</div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
                 {data.services.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
@@ -104,6 +108,11 @@ export function OverviewPage() {
                 )}
               </TableBody>
             </Table>
+            {hasEstimatedServiceCost && (
+              <p className="mt-4 text-xs text-muted-foreground">
+                标注估算的金额按已有用量计算；用量不全可能低估，服务合计可能与官方校正总额不同。
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>

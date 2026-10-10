@@ -231,7 +231,7 @@ BUDGET_THRESHOLD_CENTS=30000
 
 ```sh
 npm run dev          # 启动前后端开发服务
-npm test             # 后端测试
+npm test             # 后端与前端汇总逻辑测试
 npm run check        # 后端类型检查和前端构建
 npm run format:check # 检查代码与文档格式
 
