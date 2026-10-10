@@ -3,6 +3,8 @@ import type { Dashboard } from '@server/types';
 export type {
   Dashboard,
   Reconciliation,
+  ResourceUsageTrend,
+  ResourceCostTrend,
   ServiceSummary,
   ServiceTrend,
   ServiceTrendPoint,

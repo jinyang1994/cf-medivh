@@ -4,7 +4,9 @@ import type {
   OfficialBill,
   UsageReport,
   UsageMeter,
+  ResourceUsageTrend,
 } from '@/types';
+import { createResourceTrendReader } from '@/resources/cloudflare/resource-trend';
 import {
   analyticsQuery,
   datasets,
@@ -149,11 +151,22 @@ class Provider implements CloudflareProvider {
   private now: () => Date;
   private paid: boolean | undefined;
   private officialCache = new Map<string, { at: number; rows: BillableRow[] }>();
+  private resourceTrend: ReturnType<typeof createResourceTrendReader>;
   constructor(private config: CloudflareConfig) {
     if (!/^[a-f0-9]{32}$/.test(config.accountId) || !config.token)
       throw new Error('请配置 CLOUDFLARE_ACCOUNT_ID 和 CLOUDFLARE_API_TOKEN');
     this.fetcher = config.fetch ?? fetch;
     this.now = config.now ?? (() => new Date());
+    this.resourceTrend = createResourceTrendReader(config);
+  }
+  getResourceTrend(
+    cycle: BillingCycle,
+    service: string,
+    meterKey: string,
+    resolution: 'ten-minute' | 'daily',
+    window?: { start: string; end: string },
+  ): Promise<ResourceUsageTrend> {
+    return this.resourceTrend(cycle, service, meterKey, resolution, window);
   }
   private async request<T>(path: string, body?: unknown): Promise<Envelope<T>> {
     const response = await this.fetcher(API + path, {

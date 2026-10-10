@@ -1,10 +1,8 @@
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
-import { ServiceTrendChart } from '@/components/billing/service-trend-chart';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ServiceTrendPanel } from '@/components/billing/service-trend-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { BILLING_PATHS } from '@/constants/billing-navigation';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
 import { useServiceTrend } from '@/hooks/use-service-trend';
@@ -28,7 +26,7 @@ export function ServiceTrendPage() {
           </h2>
           {valid && (
             <p className="mt-2 text-sm text-muted-foreground">
-              查看当前账期的累计变化 · 时间均为 UTC
+              查看具体资源用量与当前账期累计变化 · 时间均为 UTC
             </p>
           )}
         </div>
@@ -74,32 +72,16 @@ export function ServiceTrendPage() {
               ))}
             </select>
           </div>
-          {error && (
-            <Alert variant="destructive" role="alert">
-              <AlertCircle aria-hidden="true" />
-              <AlertTitle>{data ? '趋势刷新失败，显示上次数据' : '无法加载趋势'}</AlertTitle>
-              <AlertDescription>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span>{error}</span>
-                  <Button size="sm" variant="outline" onClick={refresh}>
-                    重试
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-          {loading && (
-            <div role="status" aria-label="正在加载服务趋势">
-              <Skeleton className="h-96 w-full" />
-              <p className="mt-3 text-sm text-muted-foreground">正在加载服务趋势…</p>
-            </div>
-          )}
-          {data && <ServiceTrendChart key={JSON.stringify([service, meter])} data={data} />}
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            本地费用按已采集用量、单价和免费额度计算。每日图按现有用量重算；10
-            分钟图使用当时已知的采集记录，历史补采不会生成过去的采样点。缺失或不完整的数据保留断线；免费额度内费用为
-            0，可切换到具体计费项查看用量变化。
-          </p>
+          <ServiceTrendPanel
+            key={JSON.stringify([dashboard.cycle?.id, dashboard.today, service, meter])}
+            service={service}
+            meter={meter}
+            summary={selected ?? null}
+            data={data}
+            error={error}
+            loading={loading}
+            refresh={refresh}
+          />
         </>
       )}
     </>

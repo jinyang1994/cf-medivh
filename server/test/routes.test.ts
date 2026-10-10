@@ -8,8 +8,9 @@ import type { AddressInfo } from 'node:net';
 import { createApp } from '@/app';
 import { Store } from '@/repositories/billing-store';
 import { Collector } from '@/services/collector';
+import type { ResourceUsageTrend } from '@/types';
 
-async function fixture(t: TestContext, webRoot?: string) {
+async function fixture(t: TestContext, webRoot?: string, clock?: () => Date) {
   const store = new Store(':memory:');
   let providerCalls = 0;
   const unexpectedCollection = async (): Promise<never> => {
@@ -21,7 +22,7 @@ async function fixture(t: TestContext, webRoot?: string) {
     getUsage: unexpectedCollection,
     getOfficialBill: unexpectedCollection,
   };
-  const collector = new Collector(store, provider);
+  const collector = new Collector(store, provider, clock);
   const app = createApp(store, collector, webRoot);
   app.silent = true;
   const server = app.listen(0, '127.0.0.1');
@@ -159,6 +160,203 @@ test('GET service trend is read-only and validates service and optional meter se
     404,
   );
   assert.deepEqual(store.db.prepare('SELECT total_changes() AS count').get(), before);
+});
+
+test('resource trends read SQLite only and validate selections without upstream calls or writes', async (t) => {
+  const { store, collector, request } = await fixture(
+    t,
+    undefined,
+    () => new Date('2026-10-01T12:00:00Z'),
+  );
+  const cycle = { id: 'resources', start: '2026-10-01', end: '2026-10-04', currency: 'USD' };
+  store.saveCycle(cycle);
+  store.saveUsage(
+    cycle,
+    {
+      date: cycle.start,
+      observedAt: '2026-10-01T12:00:00Z',
+      complete: true,
+      meters: [
+        {
+          key: 'duration',
+          service: 'Durable Objects',
+          name: '计算时长',
+          unit: 'GB-seconds',
+          quantity: 12,
+          pricing: { currency: 'USD', unitPrice: 1, unitSize: 1, includedQuantity: 0 },
+        },
+      ],
+    },
+    true,
+  );
+  const path = '/api/resource-trend?service=Durable+Objects&meter=duration';
+  assert.equal((await request(path)).status, 200);
+  assert.match((await (await request(path)).json()).unavailableReason, /后台采集/);
+  let calls = 0;
+  const result: ResourceUsageTrend = {
+    service: 'Durable Objects',
+    meterKey: 'duration',
+    unit: 'GB-seconds',
+    resolution: 'ten-minute',
+    start: '2026-10-01T00:00:00Z',
+    end: '2026-10-01T12:00:00Z',
+    fetchedAt: '2026-10-01T12:00:00Z',
+    resources: [{ id: 'namespace-1', name: 'worker · Room', total: 12 }],
+    points: [{ timestamp: '2026-10-01T11:50:00Z', quantities: { 'namespace-1': 12 } }],
+    warnings: [],
+    unavailableReason: null,
+  };
+  collector.provider.getResourceTrend = async () => {
+    calls++;
+    throw new Error('HTTP must not reach Cloudflare');
+  };
+  store.resourceUsage.save(cycle, 'ten-minute', result);
+  store.resourceUsage.save(cycle, 'daily', {
+    ...result,
+    resolution: 'daily',
+    points: [{ timestamp: '2026-10-01T00:00:00Z', quantities: { 'namespace-1': 12 } }],
+  });
+  const before = store.db.prepare('SELECT total_changes() AS count').get();
+  for (let i = 0; i < 2; i++) {
+    const response = await request(path);
+    assert.equal(response.status, 200);
+    assertHeaders(response, true);
+    const actual = await response.json();
+    assert.equal(actual.resources[0].name, 'worker · Room');
+    assert.equal(actual.resources[0].total, 12);
+    assert.equal(actual.points.at(-1).quantities['namespace-1'], 12);
+  }
+  assert.equal(calls, 0);
+  const daily = await (await request(path + '&resolution=daily')).json();
+  assert.equal(daily.resources[0].total, 12);
+  assert.equal(calls, 0);
+  for (const query of [
+    '',
+    '?service=Durable+Objects',
+    '?meter=duration',
+    '?service=Durable+Objects&meter=',
+    '?service=Durable+Objects&meter=duration&resolution=year',
+    '?service=Durable+Objects&meter=duration&meter=duration',
+    '?service=Durable+Objects&service=Workers&meter=duration',
+    '?service=Durable+Objects&meter=duration&resolution=daily&resolution=daily',
+    '?service=Durable+Objects&meter=duration&token=private',
+  ])
+    assert.equal((await request('/api/resource-trend' + query)).status, 400, query);
+  assert.equal((await request('/api/resource-trend?service=Workers&meter=duration')).status, 404);
+  assert.equal((await request(path, { method: 'POST' })).status, 404);
+  assert.equal(calls, 0);
+  assert.deepEqual(store.db.prepare('SELECT total_changes() AS count').get(), before);
+});
+
+test('resource cost trends allocate stored usage and never call the provider or write the database', async (t) => {
+  const { store, collector, request } = await fixture(
+    t,
+    undefined,
+    () => new Date('2026-10-01T12:00:00Z'),
+  );
+  const cycle = { id: 'cost-resources', start: '2026-10-01', end: '2026-10-04', currency: 'USD' };
+  store.saveCycle(cycle);
+  store.saveUsage(
+    cycle,
+    {
+      date: cycle.start,
+      observedAt: '2026-10-01T12:00:00Z',
+      complete: true,
+      meters: [
+        {
+          key: 'memory',
+          service: 'Containers',
+          name: '内存',
+          unit: 'GiB-seconds',
+          quantity: 100,
+          pricing: { currency: 'USD', unitPrice: 1, unitSize: 1, includedQuantity: 20 },
+        },
+      ],
+    },
+    false,
+  );
+  store.resourceUsage.save(cycle, 'daily', {
+    service: 'Containers',
+    meterKey: 'memory',
+    unit: 'GiB-seconds',
+    resolution: 'daily',
+    start: '2026-10-01T00:00:00Z',
+    end: '2026-10-01T12:00:00Z',
+    fetchedAt: '2026-10-01T12:00:00Z',
+    resources: [
+      { id: 'a', name: 'application A', total: 75 },
+      { id: 'b', name: 'application B', total: 25 },
+    ],
+    points: [{ timestamp: '2026-10-01T00:00:00Z', quantities: { a: 75, b: 25 } }],
+    warnings: [],
+    unavailableReason: null,
+  });
+  let calls = 0;
+  collector.provider.getResourceTrend = async () => {
+    calls++;
+    throw new Error('must remain offline');
+  };
+  const before = store.db.prepare('SELECT total_changes() AS count').get();
+  for (const meterQuery of ['', '&meter=memory']) {
+    const response = await request(
+      '/api/resource-cost-trend?service=Containers&resolution=daily' + meterQuery,
+    );
+    assert.equal(response.status, 200);
+    assertHeaders(response, true);
+    const result = await response.json();
+    assert.equal(result.currency, 'USD');
+    assert.equal(result.points[0].total, 80);
+    assert.equal(result.points[0].costs.a, 60);
+    assert.equal(result.points[0].costs.b, 20);
+    assert.equal(result.points[0].unattributedCost, 0);
+  }
+  for (const query of [
+    '',
+    '?service=',
+    '?service=Containers&meter=',
+    '?service=Containers&service=Containers',
+    '?service=Containers&resolution=year',
+    '?service=Containers&resolution=daily&resolution=daily',
+    '?service=Containers&other=1',
+  ]) {
+    assert.equal((await request('/api/resource-cost-trend' + query)).status, 400, query);
+  }
+  assert.equal((await request('/api/resource-cost-trend?service=Missing')).status, 404);
+  assert.equal(
+    (await request('/api/resource-cost-trend?service=Containers&meter=Missing')).status,
+    404,
+  );
+  assert.equal(
+    (await request('/api/resource-cost-trend?service=Containers', { method: 'POST' })).status,
+    404,
+  );
+  assert.equal(calls, 0);
+  assert.deepEqual(store.db.prepare('SELECT total_changes() AS count').get(), before);
+});
+
+test('uncollected resource queries stay local even when an upstream method exists', async (t) => {
+  const { store, collector, request } = await fixture(t);
+  const cycle = {
+    id: 'resources',
+    start: '2026-10-01',
+    end: '2026-10-04',
+    currency: 'USD',
+    baseFee: 5,
+  };
+  store.saveCycle(cycle);
+  let calls = 0;
+  collector.provider.getResourceTrend = async () => {
+    calls++;
+    throw new Error('private token and upstream details');
+  };
+  for (let i = 0; i < 2; i++) {
+    const response = await request(
+      '/api/resource-trend?service=' + encodeURIComponent('订阅') + '&meter=__base_fee',
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).unavailableReason, '固定订阅费用没有具体资源用量。');
+  }
+  assert.equal(calls, 0);
 });
 
 test('dashboard accepts only GET, and unmatched API paths preserve JSON 404 responses', async (t) => {

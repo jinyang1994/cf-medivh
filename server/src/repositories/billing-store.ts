@@ -1,4 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
+import { ResourceUsageStore } from '@/repositories/resource-usage-store';
 import type {
   BillingCycle,
   BillingNotification,
@@ -47,6 +48,7 @@ export interface OfficialAmountEvidence {
 
 export class Store {
   readonly db: DatabaseSync;
+  readonly resourceUsage: ResourceUsageStore;
   constructor(path: string) {
     this.db = new DatabaseSync(path);
     this.db.exec(`
@@ -96,6 +98,7 @@ export class Store {
       this.db.exec('ROLLBACK');
       throw error;
     }
+    this.resourceUsage = new ResourceUsageStore(this.db);
   }
   close() {
     this.db.close();

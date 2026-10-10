@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import type { BillingCycle, CloudflareProvider, NotificationExtension, UsageReport } from '@/types';
 import { financialPoint, isRealtimeObservation, recoverBillingTimeline } from '@/services/timeline';
 import { NotificationDispatcher } from '@/services/notifications';
+import { collectResourceUsage } from '@/services/resource-collection';
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 export class Collector {
@@ -83,6 +84,7 @@ export class Collector {
       recoverBillingTimeline(this.store, now);
       if (!force && this.store.get('lastSlot') === slot) {
         await this.notifications.deliver();
+        await this.collectResources(now);
         return false;
       }
       this.store.set('lastAttempt', now.toISOString());
@@ -178,11 +180,22 @@ export class Collector {
       this.store.set('lastSlot', slot);
       if (this.store.errors().length === 0) this.store.set('lastSuccess', now.toISOString());
       await this.notifications.deliver();
+      await this.collectResources(now);
       return true;
     } finally {
       clearInterval(heartbeat);
       this.store.releaseLease(this.leaseOwner);
       this.running = false;
+    }
+  }
+  private async collectResources(now: Date) {
+    const cycle = this.store.activeCycle();
+    if (!cycle || !cycleContains(cycle, utcDate(now))) return;
+    try {
+      await collectResourceUsage(this.store, this.provider, cycle, now);
+    } catch {
+      // Resource analytics must not change billing collection status or its notifications.
+      console.error('Resource usage collection failed; the next scheduled slot will retry.');
     }
   }
   private async fetchUsage(

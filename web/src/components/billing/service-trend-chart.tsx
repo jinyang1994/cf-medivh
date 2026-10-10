@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, type DotItemDotProps } from 'recharts';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -39,9 +34,16 @@ function utcLabel(time: number, resolution: Resolution, sameDay: boolean) {
   return sameDay ? iso.slice(11, 16) : `${date} ${iso.slice(11, 16)}`;
 }
 
-export function ServiceTrendChart({ data }: { data: ServiceTrend }) {
-  const [resolution, setResolution] = useState<Resolution>('ten-minute');
-  const [metric, setMetric] = useState<Metric>(data.meterKey === null ? 'cost' : 'quantity');
+export function ServiceTrendPlot({
+  data,
+  resolution,
+  metric = 'cost',
+}: {
+  data: ServiceTrend;
+  resolution: Resolution;
+  metric?: Metric;
+}) {
+  const [hiddenSeries, setHiddenSeries] = useState<SeriesKey[]>([]);
   const chartConfig: ChartConfig = metric === 'quantity' ? quantityConfig : costConfig;
   const series: SeriesKey[] =
     metric === 'quantity'
@@ -49,9 +51,12 @@ export function ServiceTrendChart({ data }: { data: ServiceTrend }) {
       : resolution === 'daily'
         ? ['localCost', 'officialCost']
         : ['localCost'];
+  const visibleSeries = series.filter((key) => !hiddenSeries.includes(key));
   const points = useMemo<PlotPoint[]>(() => {
     let source = resolution === 'daily' ? data.history : data.timeline;
     if (resolution === 'ten-minute') {
+      const last = Date.parse(source.at(-1)?.timestamp ?? '');
+      source = source.filter((item) => Date.parse(item.timestamp) >= last - 48 * 60 * 60 * 1000);
       const first = source.findIndex(
         (item) => item.observedAt !== null || item.localCost !== null || item.quantity !== null,
       );
@@ -60,7 +65,7 @@ export function ServiceTrendChart({ data }: { data: ServiceTrend }) {
     return source.map((item) => ({ ...item, time: Date.parse(item.timestamp) }));
   }, [data, resolution]);
   const values = points.flatMap((point) =>
-    series.flatMap((key) => {
+    visibleSeries.flatMap((key) => {
       const value = point[key];
       return value !== null && Number.isFinite(value) ? [value] : [];
     }),
@@ -102,143 +107,134 @@ export function ServiceTrendChart({ data }: { data: ServiceTrend }) {
         );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>{metric === 'quantity' ? '周期累计用量' : '周期累计费用'}</CardTitle>
-          <Badge variant="outline">{metric === 'quantity' ? data.unit : data.currency}</Badge>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div role="group" aria-label="图表粒度" className="flex gap-1">
-            {(['ten-minute', 'daily'] as const).map((item) => (
-              <Button
-                key={item}
-                size="sm"
-                variant={resolution === item ? 'secondary' : 'ghost'}
-                aria-pressed={resolution === item}
-                onClick={() => setResolution(item)}
-              >
-                {item === 'ten-minute' ? '10 分钟' : '每日'}
-              </Button>
-            ))}
-          </div>
-          {data.meterKey !== null && (
-            <div role="group" aria-label="趋势指标" className="flex gap-1">
-              {(['cost', 'quantity'] as const).map((item) => (
-                <Button
-                  key={item}
-                  size="sm"
-                  variant={metric === item ? 'secondary' : 'ghost'}
-                  aria-pressed={metric === item}
-                  onClick={() => setMetric(item)}
-                >
-                  {item === 'cost' ? '累计费用' : '累计用量'}
-                </Button>
-              ))}
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {values.length > 0 ? (
-          <ChartContainer config={chartConfig} className="h-80 w-full sm:h-96">
-            <LineChart
-              key={`${resolution}-${metric}`}
-              accessibilityLayer
-              data={points}
-              margin={{ left: 4, right: 16, top: 12, bottom: 8 }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="time"
-                type="number"
-                scale="time"
-                domain={timeDomain}
-                ticks={ticks}
-                axisLine={false}
-                tickLine={false}
-                tickMargin={12}
-                minTickGap={32}
-                tickFormatter={(value: number) => utcLabel(value, resolution, sameDay)}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tickMargin={8}
-                width={metric === 'cost' ? 108 : 96}
-                domain={domain}
-                tickFormatter={formatAxis}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(_label, payload) => {
-                      const point = payload[0]?.payload as PlotPoint | undefined;
-                      if (!point) return null;
-                      return (
-                        <>
-                          <div>
-                            {point.timestamp
-                              .slice(0, resolution === 'daily' ? 10 : 16)
-                              .replace('T', ' ')}{' '}
-                            UTC
+    <div className="space-y-5">
+      {values.length > 0 ? (
+        <ChartContainer config={chartConfig} className="h-80 w-full sm:h-96">
+          <LineChart
+            key={`${resolution}-${metric}`}
+            accessibilityLayer
+            data={points}
+            margin={{ left: 4, right: 16, top: 12, bottom: 8 }}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="time"
+              type="number"
+              scale="time"
+              domain={timeDomain}
+              ticks={ticks}
+              axisLine={false}
+              tickLine={false}
+              tickMargin={12}
+              minTickGap={32}
+              tickFormatter={(value: number) => utcLabel(value, resolution, sameDay)}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tickMargin={8}
+              width={metric === 'cost' ? 108 : 96}
+              domain={domain}
+              tickFormatter={formatAxis}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(_label, payload) => {
+                    const point = payload[0]?.payload as PlotPoint | undefined;
+                    if (!point) return null;
+                    return (
+                      <>
+                        <div>
+                          {point.timestamp
+                            .slice(0, resolution === 'daily' ? 10 : 16)
+                            .replace('T', ' ')}{' '}
+                          UTC
+                        </div>
+                        {resolution === 'ten-minute' && point.observedAt && (
+                          <div className="mt-1 font-normal text-muted-foreground">
+                            采集 {point.observedAt.slice(11, 19)} UTC
                           </div>
-                          {resolution === 'ten-minute' && point.observedAt && (
-                            <div className="mt-1 font-normal text-muted-foreground">
-                              采集 {point.observedAt.slice(11, 19)} UTC
-                            </div>
-                          )}
-                        </>
-                      );
-                    }}
-                    formatter={(value, name) => (
-                      <div className="flex min-w-44 justify-between gap-4">
-                        <span className="text-muted-foreground">
-                          {chartConfig[String(name)]?.label ?? String(name)}
-                        </span>
-                        <span className="font-mono font-medium tabular-nums">
-                          {metric === 'cost'
-                            ? money(Number(value), data.currency, 'rate')
-                            : `${preciseQuantity(Number(value))} ${data.unit}`}
-                        </span>
-                      </div>
-                    )}
-                  />
-                }
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-              {series.map((key) => (
-                <Line
-                  key={key}
-                  dataKey={key}
-                  type="linear"
-                  stroke={`var(--color-${key})`}
-                  strokeWidth={2}
-                  strokeDasharray={
-                    key === 'localCost' && resolution === 'daily' ? '5 4' : undefined
-                  }
-                  isAnimationActive={false}
-                  connectNulls={false}
-                  dot={({ cx, cy, index }: DotItemDotProps) =>
-                    points[index]?.[key] != null &&
-                    (points.length <= 288 ||
-                      (points[index - 1]?.[key] == null && points[index + 1]?.[key] == null)) ? (
-                      <circle key={index} cx={cx} cy={cy} r={2.5} fill={`var(--color-${key})`} />
-                    ) : null
-                  }
-                  activeDot={{ r: 4 }}
+                        )}
+                      </>
+                    );
+                  }}
+                  formatter={(value, name) => (
+                    <div className="flex min-w-44 justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {chartConfig[String(name)]?.label ?? String(name)}
+                      </span>
+                      <span className="font-mono font-medium tabular-nums">
+                        {metric === 'cost'
+                          ? money(Number(value), data.currency, 'rate')
+                          : `${preciseQuantity(Number(value))} ${data.unit}`}
+                      </span>
+                    </div>
+                  )}
                 />
-              ))}
-            </LineChart>
-          </ChartContainer>
-        ) : (
-          <div className="flex h-80 items-center justify-center px-4 text-center text-sm text-muted-foreground">
-            {resolution === 'ten-minute'
+              }
+            />
+            {visibleSeries.map((key) => (
+              <Line
+                key={key}
+                dataKey={key}
+                type="linear"
+                stroke={`var(--color-${key})`}
+                strokeWidth={2}
+                strokeDasharray={key === 'localCost' && resolution === 'daily' ? '5 4' : undefined}
+                isAnimationActive={false}
+                connectNulls={false}
+                dot={({ cx, cy, index }: DotItemDotProps) =>
+                  points[index]?.[key] != null &&
+                  (points.length <= 288 ||
+                    (points[index - 1]?.[key] == null && points[index + 1]?.[key] == null)) ? (
+                    <circle key={index} cx={cx} cy={cy} r={2.5} fill={`var(--color-${key})`} />
+                  ) : null
+                }
+                activeDot={{ r: 4 }}
+              />
+            ))}
+          </LineChart>
+        </ChartContainer>
+      ) : (
+        <div className="flex h-80 items-center justify-center px-4 text-center text-sm text-muted-foreground sm:h-96">
+          {visibleSeries.length === 0
+            ? '点击下方图例显示曲线。'
+            : resolution === 'ten-minute'
               ? '暂无完整的 10 分钟采集记录，可切换到每日查看历史数据。'
               : '暂无可用的每日趋势，等待用量采集或补全。'}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+      <ul aria-label="曲线图例" className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+        {series.map((key) => {
+          const visible = !hiddenSeries.includes(key);
+          return (
+            <li key={key} className="min-w-0 max-w-full">
+              <button
+                type="button"
+                aria-pressed={visible}
+                onClick={() =>
+                  setHiddenSeries((previous) =>
+                    previous.includes(key)
+                      ? previous.filter((item) => item !== key)
+                      : [...previous, key],
+                  )
+                }
+                className={`flex max-w-full cursor-pointer items-start gap-2 rounded-sm px-1 py-1 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${visible ? '' : 'text-muted-foreground opacity-50'}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="mt-1 size-2 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor: visible ? chartConfig[key].color : 'var(--muted-foreground)',
+                  }}
+                />
+                <span className="min-w-0 break-words">{chartConfig[key].label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

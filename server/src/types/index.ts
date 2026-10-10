@@ -60,6 +60,14 @@ export interface CloudflareProvider {
   getBillingCycle(now: Date): Promise<BillingCycle>;
   /** Historical dates are requested for recovery/backfill and midnight finalization. */
   getUsage(cycle: BillingCycle, date: string): Promise<UsageReport>;
+  /** Resource analytics are independent of billing collection and never send notifications. */
+  getResourceTrend?(
+    cycle: BillingCycle,
+    service: string,
+    meterKey: string,
+    resolution: 'ten-minute' | 'daily',
+    window?: { start: string; end: string },
+  ): Promise<ResourceUsageTrend>;
   /** null means not ready; failures and null are both retried on the next poll. */
   getOfficialBill(
     cycle: BillingCycle,
@@ -116,6 +124,45 @@ export interface ServiceTrend {
   currency: string;
   history: ServiceTrendPoint[];
   timeline: ServiceTrendPoint[];
+}
+
+export interface ResourceUsageTrend {
+  service: string;
+  meterKey: string;
+  unit: string;
+  /** Cloudflare storage datasets may only expose hourly samples. */
+  resolution: 'ten-minute' | 'hourly' | 'daily';
+  start: string;
+  end: string;
+  fetchedAt: string;
+  resources: { id: string; name: string; total: number }[];
+  /** Quantities within each interval, never cumulative charges or allocated account fees. */
+  points: { timestamp: string; quantities: Record<string, number | null> }[];
+  /** Independently completed API windows, persisted for incremental recovery. */
+  coverage?: { start: string; end: string; complete: boolean }[];
+  warnings: string[];
+  unavailableReason: string | null;
+}
+
+/** Estimated allocation of stored local cumulative charges, never official per-resource bills. */
+export interface ResourceCostTrend {
+  service: string;
+  meterKey: string | null;
+  currency: string;
+  resolution: 'ten-minute' | 'daily';
+  start: string;
+  end: string;
+  fetchedAt: string;
+  resources: { id: string; name: string; total: number }[];
+  points: {
+    timestamp: string;
+    total: number | null;
+    officialCost: number | null;
+    costs: Record<string, number | null>;
+    unattributedCost: number | null;
+  }[];
+  warnings: string[];
+  unavailableReason: string | null;
 }
 
 export interface BillingNotification {
