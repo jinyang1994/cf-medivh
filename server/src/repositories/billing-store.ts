@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import type {
   BillingCycle,
+  BillingNotification,
   BillingPoint,
   DeliveryNotification,
   Notification,
@@ -88,6 +89,7 @@ export class Store {
       }
       this.db.exec(`
         CREATE INDEX IF NOT EXISTS pending_notifications ON notification_outbox(target_id,next_attempt_at,created_at,id) WHERE sent_at IS NULL;
+        CREATE INDEX IF NOT EXISTS sent_notifications ON notification_outbox(target_id,sent_at) WHERE sent_at IS NOT NULL;
         COMMIT;
       `);
     } catch (error) {
@@ -338,6 +340,17 @@ export class Store {
         )
         .all(targetId, nowIso, limit) as { payload: string; attempts: number }[]
     ).map((row) => ({ notification: JSON.parse(row.payload), attempts: row.attempts }));
+  }
+  lastSentBillingNotification(targetId = 'feishu'): BillingNotification | null {
+    const row = this.db
+      .prepare(
+        `SELECT payload FROM notification_outbox
+         WHERE target_id=? AND sent_at IS NOT NULL
+           AND COALESCE(json_extract(payload, '$.kind'), 'billing')='billing'
+         ORDER BY sent_at DESC, created_at DESC, id DESC LIMIT 1`,
+      )
+      .get(targetId) as { payload: string } | undefined;
+    return row ? (JSON.parse(row.payload) as BillingNotification) : null;
   }
   markNotificationSent(id: string, sentAtIso: string, targetId = 'feishu'): void {
     this.db

@@ -139,7 +139,10 @@ export interface CollectionFailureNotification {
 }
 
 export type Notification = BillingNotification | CollectionFailureNotification;
-export type NotificationSender = (notification: Notification) => Promise<void>;
+export type NotificationSender = (
+  notification: Notification,
+  previousBilling?: BillingNotification | null,
+) => Promise<void>;
 
 export interface BudgetAlertNotification {
   kind: 'budget_exceeded';
@@ -161,7 +164,11 @@ export interface NotificationExtension {
   label: string;
   retry?: 'until_success';
   prepare(notification: Notification): DeliveryNotification | null;
-  send(notification: DeliveryNotification): Promise<void>;
+  /** Last successfully delivered billing summary for this target, excluding failure alerts. */
+  send(
+    notification: DeliveryNotification,
+    previousBilling?: BillingNotification | null,
+  ): Promise<void>;
 }
 
 export interface Dashboard {

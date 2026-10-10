@@ -21,9 +21,9 @@ export function createFeishuExtension(send: NotificationSender): NotificationExt
     id: 'feishu',
     label: '飞书通知',
     prepare: (notification) => notification,
-    async send(notification) {
+    async send(notification, previousBilling) {
       if (notification.kind === 'budget_exceeded') throw new Error('飞书通知事件类型无效');
-      await send(notification);
+      await send(notification, previousBilling);
     },
   };
 }

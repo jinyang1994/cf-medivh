@@ -1,6 +1,11 @@
 import { createHmac } from 'node:crypto';
 import { utcDay } from '@/utils/dates';
-import type { BillingNotification, CollectionFailureNotification, Notification } from '@/types';
+import type {
+  BillingNotification,
+  CollectionFailureNotification,
+  Notification,
+  NotificationSender,
+} from '@/types';
 
 interface FeishuConfig {
   webhookUrl: string;
@@ -28,7 +33,31 @@ function summaryNotes(messages: string[], label: string): string[] {
   return notes;
 }
 
-function billingText({ cycle, point, warnings }: BillingNotification): string {
+function billingChange(
+  { cycle, point }: BillingNotification,
+  previous: BillingNotification | null | undefined,
+): string {
+  if (
+    !previous ||
+    previous.cycle.id !== cycle.id ||
+    previous.cycle.start !== cycle.start ||
+    previous.cycle.end !== cycle.end
+  )
+    return '本账期首次汇报，暂无对比';
+  if (previous.cycle.currency !== cycle.currency) return '币种变化，暂无对比';
+  const before = previous.point.currentTotal;
+  const current = point.currentTotal;
+  if (before === null || current === null || !Number.isFinite(before) || !Number.isFinite(current))
+    return '待校正';
+  const delta = Number((current - before).toFixed(6));
+  return `${cycle.currency} ${delta.toFixed(6)}`;
+}
+
+function billingText(
+  notification: BillingNotification,
+  previousBilling?: BillingNotification | null,
+): string {
+  const { cycle, point, warnings } = notification;
   const amount = (value: number | null): string =>
     value !== null && Number.isFinite(value) ? `${cycle.currency} ${value.toFixed(6)}` : '待校正';
   return [
@@ -37,6 +66,7 @@ function billingText({ cycle, point, warnings }: BillingNotification): string {
     `账期（UTC）：${cycle.start} 至 ${cycle.end}（结束日不含）`,
     `官方账单 + 预测：${amount(point.currentTotal)}`,
     `本地数据 + 预测：${amount(point.localTotal)}`,
+    `本次增量：${billingChange(notification, previousBilling)}`,
     `当日增量（UTC）：${amount(point.todayLocal)}`,
     `昨日官方累计：${amount(point.officialHistorical)}`,
     ...summaryNotes(warnings, '提示'),
@@ -67,10 +97,10 @@ function isCollectionFailure(
 export function createFeishuSender(
   config: FeishuConfig,
   options: SenderOptions = {},
-): (notification: Notification) => Promise<void> {
+): NotificationSender {
   const fetcher = options.fetch ?? fetch;
   const now = options.now ?? (() => new Date());
-  return async (notification) => {
+  return async (notification, previousBilling) => {
     const payload: {
       msg_type: 'text';
       content: { text: string };
@@ -81,7 +111,7 @@ export function createFeishuSender(
       content: {
         text: isCollectionFailure(notification)
           ? failureText(notification)
-          : billingText(notification),
+          : billingText(notification, previousBilling),
       },
     };
     if (config.secret) {

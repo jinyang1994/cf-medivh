@@ -50,7 +50,11 @@ export class NotificationDispatcher {
       if (index > 0) await this.pause(signal);
       while (!signal.aborted) {
         try {
-          await extension.send(notification);
+          const previousBilling =
+            notification.kind === undefined || notification.kind === 'billing'
+              ? this.store.lastSentBillingNotification(extension.id)
+              : null;
+          await extension.send(notification, previousBilling);
         } catch (error) {
           this.store.retryNotification(
             notification.id,

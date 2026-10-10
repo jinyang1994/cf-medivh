@@ -59,6 +59,7 @@ test('Feishu sends only a text summary with Beijing collection time, UTC cycle, 
             '账期（UTC）：2026-09-16 至 2026-10-16（结束日不含）',
             '官方账单 + 预测：USD 5.658488',
             '本地数据 + 预测：USD 5.659403',
+            '本次增量：本账期首次汇报，暂无对比',
             '当日增量（UTC）：USD 0.032874',
             '昨日官方累计：USD 5.625614',
             '提示：历史日志已超出保留期',
@@ -73,6 +74,75 @@ test('Feishu sends only a text summary with Beijing collection time, UTC cycle, 
     },
   )(notification);
   assert.equal(calls, 1);
+});
+
+test('Feishu reports sub-cent growth, reductions, and unchanged totals against the previous summary', async () => {
+  const cases = [
+    { current: 5.658488, previous: 5.655608, expected: 'USD 0.002880' },
+    { current: 5.655608, previous: 5.658488, expected: 'USD -0.002880' },
+    { current: 5.658488, previous: 5.658488, expected: 'USD 0.000000' },
+    { current: 0.000001, previous: 0, expected: 'USD 0.000001' },
+    { current: 0, previous: 0, expected: 'USD 0.000000' },
+    { current: 0.3, previous: 0.1 + 0.2, expected: 'USD 0.000000' },
+    { current: null, previous: 5.655608, expected: '待校正' },
+    { current: 5.658488, previous: null, expected: '待校正' },
+    { current: Number.NaN, previous: 5, expected: '待校正' },
+    { current: 5, previous: Number.POSITIVE_INFINITY, expected: '待校正' },
+  ];
+  for (const { current, previous, expected } of cases) {
+    await createFeishuSender(
+      { webhookUrl },
+      {
+        fetch: async (_input, init) => {
+          const text = JSON.parse(String(init?.body)).content.text as string;
+          assert.ok(text.includes(`本次增量：${expected}`));
+          assert.doesNotMatch(text, /-0\.000000|NaN|Infinity/);
+          return Response.json({ code: 0 });
+        },
+      },
+    )(
+      {
+        ...notification,
+        point: { ...notification.point, currentTotal: current, todayLocal: 0.001 },
+      },
+      {
+        ...notification,
+        id: 'previous-day-summary',
+        point: {
+          ...notification.point,
+          timestamp: '2026-10-07T23:50:00.000Z',
+          observedAt: '2026-10-07T23:50:05.000Z',
+          currentTotal: previous,
+          todayLocal: 0.1,
+          localTotal: 99,
+        },
+      },
+    );
+  }
+});
+
+test('Feishu does not compare totals across billing cycles or currencies', async () => {
+  const cases = [
+    {
+      cycle: { ...notification.cycle, id: 'previous-cycle' },
+      expected: '本账期首次汇报，暂无对比',
+    },
+    { cycle: { ...notification.cycle, start: '2026-09-01' }, expected: '本账期首次汇报，暂无对比' },
+    { cycle: { ...notification.cycle, end: '2026-10-01' }, expected: '本账期首次汇报，暂无对比' },
+    { cycle: { ...notification.cycle, currency: 'EUR' }, expected: '币种变化，暂无对比' },
+  ];
+  for (const { cycle, expected } of cases) {
+    await createFeishuSender(
+      { webhookUrl },
+      {
+        fetch: async (_input, init) => {
+          const text = JSON.parse(String(init?.body)).content.text as string;
+          assert.ok(text.includes(`本次增量：${expected}`));
+          return Response.json({ code: 0 });
+        },
+      },
+    )(notification, { ...notification, cycle });
+  }
 });
 
 test('Feishu keeps pending amounts distinct from measured zero and does not invent a collection time', async () => {
