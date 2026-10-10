@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BillingLoading } from '@/components/billing/billing-loading';
+import { BillingNotifications } from '@/components/billing/billing-notifications';
 import { BILLING_NAVIGATION, BILLING_PATHS } from '@/constants/billing-navigation';
 import { useDashboard } from '@/hooks/use-dashboard';
 import type { BillingDashboardContext } from '@/types/billing';
@@ -24,6 +25,11 @@ export function BillingLayout() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">UTC</span>
+            <BillingNotifications
+              cycleId={cycle?.id ?? null}
+              errors={collection?.errors ?? []}
+              warnings={collection?.warnings ?? []}
+            />
             <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
               <RefreshCw className={loading ? 'animate-spin' : ''} aria-hidden="true" />
               刷新
@@ -61,30 +67,6 @@ export function BillingLayout() {
             <AlertCircle aria-hidden="true" />
             <AlertTitle>无法加载账单</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        {collection && (collection.errors.length > 0 || collection.warnings.length > 0) && (
-          <Alert variant={collection.errors.length > 0 ? 'destructive' : 'default'}>
-            <AlertCircle aria-hidden="true" />
-            <AlertTitle>
-              {collection.errors.length > 0
-                ? '部分数据同步失败'
-                : data?.totals.complete
-                  ? '数据提示'
-                  : '数据待补全'}
-            </AlertTitle>
-            <AlertDescription>
-              <details>
-                <summary className="cursor-pointer">
-                  {new Set([...collection.errors, ...collection.warnings]).size} 条详情
-                </summary>
-                <ul className="mt-2 list-inside list-disc space-y-1 break-words">
-                  {[...new Set([...collection.errors, ...collection.warnings])].map((message) => (
-                    <li key={message}>{message}</li>
-                  ))}
-                </ul>
-              </details>
-            </AlertDescription>
           </Alert>
         )}
         {data ? (
