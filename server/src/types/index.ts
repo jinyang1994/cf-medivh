@@ -121,6 +121,29 @@ export interface CollectionFailureNotification {
 export type Notification = BillingNotification | CollectionFailureNotification;
 export type NotificationSender = (notification: Notification) => Promise<void>;
 
+export interface BudgetAlertNotification {
+  kind: 'budget_exceeded';
+  /** Stable per billing cycle, including across delivery retries and restarts. */
+  id: string;
+  cycle: BillingCycle;
+  observedAt: string;
+  metric: 'currentTotal';
+  /** Integer US cents; 30000 means USD 300. */
+  thresholdCents: number;
+  /** Preserve the observed dollar amount, including fractions of a cent. */
+  amountUsd: number;
+}
+
+export type DeliveryNotification = Notification | BudgetAlertNotification;
+
+export interface NotificationExtension {
+  id: string;
+  label: string;
+  retry?: 'until_success';
+  prepare(notification: Notification): DeliveryNotification | null;
+  send(notification: DeliveryNotification): Promise<void>;
+}
+
 export interface Dashboard {
   cycle: BillingCycle | null;
   asOf: string | null;

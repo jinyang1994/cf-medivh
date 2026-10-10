@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { Store } from '@/repositories/billing-store';
 import type { BillingNotification, CollectionFailureNotification } from '@/types';
 
@@ -206,4 +207,110 @@ test('last collected time excludes restored history and finds the newest realtim
     '2026-10-08T11:50:08.000Z',
   );
   assert.equal(store.lastCollectedAt(), '2026-10-08T11:50:04.000Z');
+});
+
+test('the same event has independent delivery state for each notification target', (t) => {
+  const store = new Store(':memory:');
+  t.after(() => store.close());
+  const item = notification();
+  store.enqueueNotification(item);
+  store.enqueueNotification(item, 'budget-webhook', '费用阈值 webhook');
+  store.retryNotification(
+    item.id,
+    '2026-10-08T12:10:00.000Z',
+    'webhook 暂时不可用',
+    'budget-webhook',
+  );
+  store.markNotificationSent(item.id, '2026-10-08T12:00:10.000Z');
+
+  assert.deepEqual(store.pendingNotifications('2026-10-08T12:10:00.000Z'), []);
+  assert.deepEqual(
+    store.pendingNotifications('2026-10-08T12:09:59.999Z', 10, 'budget-webhook'),
+    [],
+  );
+  assert.deepEqual(store.pendingNotifications('2026-10-08T12:10:00.000Z', 10, 'budget-webhook'), [
+    { notification: item, attempts: 1 },
+  ]);
+  assert.match(store.notificationErrors()[0]!, /费用阈值 webhook.*已失败 1 次.*webhook 暂时不可用/);
+  store.markNotificationSent(item.id, '2026-10-08T12:10:01.000Z', 'budget-webhook');
+  assert.deepEqual(store.notificationErrors(), []);
+  assert.equal(
+    (
+      store.db.prepare('SELECT COUNT(*) AS count FROM notification_outbox').get() as {
+        count: number;
+      }
+    ).count,
+    2,
+  );
+});
+
+test('legacy notification queues migrate without losing payloads, retries, or sent records', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'cf-notification-migration-'));
+  const path = join(directory, 'billing.sqlite');
+  const legacy = new DatabaseSync(path);
+  legacy.exec(`
+    CREATE TABLE notification_outbox (id TEXT PRIMARY KEY, payload TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at TEXT NOT NULL, created_at TEXT NOT NULL, sent_at TEXT, last_error TEXT);
+    CREATE INDEX pending_notifications ON notification_outbox(next_attempt_at,created_at,id) WHERE sent_at IS NULL;
+  `);
+  const pending = notification('legacy-pending');
+  const sent = notification('legacy-sent');
+  const insert = legacy.prepare('INSERT INTO notification_outbox VALUES (?,?,?,?,?,?,?)');
+  insert.run(
+    pending.id,
+    JSON.stringify(pending),
+    4,
+    '2026-10-08T12:30:00.000Z',
+    pending.point.observedAt!,
+    null,
+    '旧投递错误',
+  );
+  insert.run(
+    sent.id,
+    JSON.stringify(sent),
+    2,
+    '2026-10-08T12:20:00.000Z',
+    sent.point.observedAt!,
+    '2026-10-08T12:20:01.000Z',
+    null,
+  );
+  legacy.close();
+
+  let store = new Store(path);
+  t.after(() => {
+    store.close();
+    rmSync(directory, { recursive: true });
+  });
+  assert.deepEqual(store.pendingNotifications('2026-10-08T12:29:59.999Z'), []);
+  assert.deepEqual(store.pendingNotifications('2026-10-08T12:30:00.000Z'), [
+    { notification: pending, attempts: 4 },
+  ]);
+  assert.match(store.notificationErrors()[0]!, /飞书通知.*已失败 4 次.*旧投递错误/);
+  const retained = store.db
+    .prepare(
+      'SELECT payload,attempts,next_attempt_at,created_at,sent_at,last_error,target_id FROM notification_outbox WHERE id=?',
+    )
+    .get(sent.id) as Record<string, unknown>;
+  assert.deepEqual(
+    { ...retained },
+    {
+      payload: JSON.stringify(sent),
+      attempts: 2,
+      next_attempt_at: '2026-10-08T12:20:00.000Z',
+      created_at: sent.point.observedAt,
+      sent_at: '2026-10-08T12:20:01.000Z',
+      last_error: null,
+      target_id: 'feishu',
+    },
+  );
+  store.enqueueNotification(sent);
+  store.enqueueNotification(sent, 'budget-webhook', '费用阈值 webhook');
+  assert.equal(
+    store.pendingNotifications('2026-10-08T12:30:00.000Z', 10, 'budget-webhook').length,
+    1,
+  );
+  store.close();
+  store = new Store(path);
+  assert.deepEqual(store.pendingNotifications('2026-10-08T12:30:00.000Z'), [
+    { notification: pending, attempts: 4 },
+  ]);
 });

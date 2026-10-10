@@ -1,5 +1,25 @@
 import { DatabaseSync } from 'node:sqlite';
-import type { BillingCycle, BillingPoint, Notification, OfficialBill, UsageReport } from '@/types';
+import type {
+  BillingCycle,
+  BillingPoint,
+  DeliveryNotification,
+  Notification,
+  OfficialBill,
+  UsageReport,
+} from '@/types';
+
+const notificationTable = `CREATE TABLE IF NOT EXISTS notification_outbox (
+  target_id TEXT NOT NULL,
+  target_label TEXT NOT NULL,
+  id TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  next_attempt_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  sent_at TEXT,
+  last_error TEXT,
+  PRIMARY KEY(target_id,id)
+)`;
 
 export interface DailyUsage {
   report: UsageReport;
@@ -43,8 +63,6 @@ export class Store {
       CREATE TABLE IF NOT EXISTS state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS collector_lease (name TEXT PRIMARY KEY, owner TEXT NOT NULL, expires_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS billing_points (cycle_id TEXT NOT NULL REFERENCES cycles(id), slot TEXT NOT NULL, observed_at TEXT NOT NULL, quality INTEGER NOT NULL, origin TEXT NOT NULL, recorded_at TEXT NOT NULL, payload TEXT NOT NULL, evidence TEXT NOT NULL DEFAULT '{}', PRIMARY KEY(cycle_id,slot));
-      CREATE TABLE IF NOT EXISTS notification_outbox (id TEXT PRIMARY KEY, payload TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at TEXT NOT NULL, created_at TEXT NOT NULL, sent_at TEXT, last_error TEXT);
-      CREATE INDEX IF NOT EXISTS pending_notifications ON notification_outbox(next_attempt_at,created_at,id) WHERE sent_at IS NULL;
     `);
     if (
       !(this.db.prepare('PRAGMA table_info(billing_points)').all() as { name: string }[]).some(
@@ -52,6 +70,30 @@ export class Store {
       )
     )
       this.db.exec("ALTER TABLE billing_points ADD COLUMN evidence TEXT NOT NULL DEFAULT '{}'");
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const columns = this.db.prepare('PRAGMA table_info(notification_outbox)').all() as {
+        name: string;
+      }[];
+      if (columns.length && !columns.some((column) => column.name === 'target_id')) {
+        this.db.exec(`
+          ALTER TABLE notification_outbox RENAME TO legacy_notification_outbox;
+          ${notificationTable};
+          INSERT INTO notification_outbox(target_id,target_label,id,payload,attempts,next_attempt_at,created_at,sent_at,last_error)
+            SELECT 'feishu','飞书通知',id,payload,attempts,next_attempt_at,created_at,sent_at,last_error FROM legacy_notification_outbox;
+          DROP TABLE legacy_notification_outbox;
+        `);
+      } else {
+        this.db.exec(notificationTable);
+      }
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS pending_notifications ON notification_outbox(target_id,next_attempt_at,created_at,id) WHERE sent_at IS NULL;
+        COMMIT;
+      `);
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
   }
   close() {
     this.db.close();
@@ -248,53 +290,86 @@ export class Store {
     ).observed_at;
   }
   /** Keep the first snapshot immutable even when a slot is collected again. */
-  enqueueNotification(notification: Notification): void {
+  enqueueNotification(
+    notification: DeliveryNotification,
+    targetId = 'feishu',
+    targetLabel = '飞书通知',
+  ): void {
     const createdAt =
-      'kind' in notification && notification.kind === 'collection_failure'
+      notification.kind === 'collection_failure'
         ? notification.attemptedAt
-        : (notification.point.observedAt ?? notification.point.timestamp);
+        : notification.kind === 'budget_exceeded'
+          ? notification.observedAt
+          : (notification.point.observedAt ?? notification.point.timestamp);
     this.db
       .prepare(
-        'INSERT OR IGNORE INTO notification_outbox(id,payload,next_attempt_at,created_at) VALUES (?,?,?,?)',
+        'INSERT OR IGNORE INTO notification_outbox(target_id,target_label,id,payload,next_attempt_at,created_at) VALUES (?,?,?,?,?,?)',
       )
-      .run(notification.id, JSON.stringify(notification), createdAt, createdAt);
+      .run(
+        targetId,
+        targetLabel,
+        notification.id,
+        JSON.stringify(notification),
+        createdAt,
+        createdAt,
+      );
   }
   pendingNotifications(
     nowIso: string,
+    limit?: number,
+  ): { notification: Notification; attempts: number }[];
+  pendingNotifications(
+    nowIso: string,
+    limit: number,
+    targetId: string,
+  ): { notification: DeliveryNotification; attempts: number }[];
+  pendingNotifications(
+    nowIso: string,
     limit = 10,
-  ): { notification: Notification; attempts: number }[] {
+    targetId = 'feishu',
+  ): { notification: DeliveryNotification; attempts: number }[] {
     return (
       this.db
         .prepare(
-          'SELECT payload,attempts FROM notification_outbox WHERE sent_at IS NULL AND next_attempt_at<=? ORDER BY created_at,id LIMIT ?',
+          'SELECT payload,attempts FROM notification_outbox WHERE target_id=? AND sent_at IS NULL AND next_attempt_at<=? ORDER BY created_at,id LIMIT ?',
         )
-        .all(nowIso, limit) as { payload: string; attempts: number }[]
+        .all(targetId, nowIso, limit) as { payload: string; attempts: number }[]
     ).map((row) => ({ notification: JSON.parse(row.payload), attempts: row.attempts }));
   }
-  markNotificationSent(id: string, sentAtIso: string): void {
+  markNotificationSent(id: string, sentAtIso: string, targetId = 'feishu'): void {
     this.db
       .prepare(
-        'UPDATE notification_outbox SET sent_at=?,last_error=NULL WHERE id=? AND sent_at IS NULL',
+        'UPDATE notification_outbox SET sent_at=?,last_error=NULL WHERE target_id=? AND id=? AND sent_at IS NULL',
       )
-      .run(sentAtIso, id);
+      .run(sentAtIso, targetId, id);
   }
-  retryNotification(id: string, nextAttemptAtIso: string, error: string): void {
+  retryNotification(
+    id: string,
+    nextAttemptAtIso: string,
+    error: string,
+    targetId = 'feishu',
+  ): void {
     this.db
       .prepare(
-        'UPDATE notification_outbox SET attempts=attempts+1,next_attempt_at=?,last_error=? WHERE id=? AND sent_at IS NULL',
+        'UPDATE notification_outbox SET attempts=attempts+1,next_attempt_at=?,last_error=? WHERE target_id=? AND id=? AND sent_at IS NULL',
       )
-      .run(nextAttemptAtIso, error, id);
+      .run(nextAttemptAtIso, error, targetId, id);
   }
   notificationErrors(): string[] {
     return (
       this.db
         .prepare(
-          'SELECT created_at,attempts,last_error FROM notification_outbox WHERE sent_at IS NULL AND attempts>0 AND last_error IS NOT NULL ORDER BY created_at,id',
+          'SELECT target_label,created_at,attempts,last_error FROM notification_outbox WHERE sent_at IS NULL AND attempts>0 AND last_error IS NOT NULL ORDER BY created_at,target_id,id',
         )
-        .all() as { created_at: string; attempts: number; last_error: string }[]
+        .all() as {
+        target_label: string;
+        created_at: string;
+        attempts: number;
+        last_error: string;
+      }[]
     ).map(
       (row) =>
-        `飞书通知（${row.created_at}，已失败 ${row.attempts} 次，等待重试）：${row.last_error}`,
+        `${row.target_label}（${row.created_at}，已失败 ${row.attempts} 次，等待重试）：${row.last_error}`,
     );
   }
   saveBill(

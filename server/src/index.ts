@@ -6,16 +6,17 @@ import { createApp } from '@/app';
 import { createCloudflareProvider } from '@/resources/cloudflare/provider';
 import { Collector } from '@/services/collector';
 import { Store } from '@/repositories/billing-store';
-import { createFeishuSender } from '@/resources/feishu';
+import { createNotificationExtensions } from '@/resources/notifications';
 
-const { root, accountId, token, databasePath, host, port, feishu } = loadConfig();
+const config = loadConfig();
+const { root, accountId, token, databasePath, host, port } = config;
 mkdirSync(dirname(databasePath), { recursive: true });
 const store = new Store(databasePath);
 const collector = new Collector(
   store,
   createCloudflareProvider({ accountId, token }),
   undefined,
-  feishu ? createFeishuSender(feishu) : undefined,
+  createNotificationExtensions(config),
 );
 const app = createApp(store, collector, resolve(root, 'web/dist'));
 app.on('error', (error: Error) => console.error('HTTP request failed:', error.message));

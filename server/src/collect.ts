@@ -5,16 +5,17 @@ import { createCloudflareProvider } from '@/resources/cloudflare/provider';
 import { Store } from '@/repositories/billing-store';
 import { Collector } from '@/services/collector';
 import { dashboard } from '@/services/dashboard';
-import { createFeishuSender } from '@/resources/feishu';
+import { createNotificationExtensions } from '@/resources/notifications';
 
-const { accountId, token, databasePath, feishu } = loadConfig();
+const config = loadConfig();
+const { accountId, token, databasePath } = config;
 mkdirSync(dirname(databasePath), { recursive: true });
 const store = new Store(databasePath);
 const collector = new Collector(
   store,
   createCloudflareProvider({ accountId, token }),
   undefined,
-  feishu ? createFeishuSender(feishu) : undefined,
+  createNotificationExtensions(config),
 );
 try {
   const collected = await collector.tick(true);

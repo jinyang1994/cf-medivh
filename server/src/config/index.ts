@@ -29,6 +29,33 @@ export function readFeishuConfig(env: NodeJS.ProcessEnv = process.env) {
   return { webhookUrl, ...(secret ? { secret } : {}) };
 }
 
+export function readBudgetWebhookConfig(env: NodeJS.ProcessEnv = process.env) {
+  const webhookUrl = env.BUDGET_WEBHOOK_URL?.trim();
+  const threshold = env.BUDGET_THRESHOLD_CENTS?.trim();
+  if (!webhookUrl && !threshold) return undefined;
+  if (!webhookUrl || !threshold)
+    throw new Error('BUDGET_WEBHOOK_URL 和 BUDGET_THRESHOLD_CENTS 必须同时配置');
+
+  const thresholdCents = Number(threshold);
+  if (!/^\d+$/.test(threshold) || !Number.isSafeInteger(thresholdCents) || thresholdCents <= 0)
+    throw new Error('BUDGET_THRESHOLD_CENTS 必须是正的安全整数（美元分，如 30000 表示 300 美元）');
+
+  let url: URL;
+  try {
+    url = new URL(webhookUrl);
+  } catch {
+    throw new Error('BUDGET_WEBHOOK_URL 不是有效的 Webhook 地址');
+  }
+  if (
+    !['http:', 'https:'].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    webhookUrl.includes('#')
+  )
+    throw new Error('BUDGET_WEBHOOK_URL 必须使用 HTTP 或 HTTPS，且不能包含用户名、密码或片段');
+  return { webhookUrl, thresholdCents };
+}
+
 export function loadConfig() {
   const root = fileURLToPath(new URL('../../../', import.meta.url));
   dotenv.config({ path: resolve(root, '.env'), quiet: true });
@@ -47,6 +74,7 @@ export function loadConfig() {
     host,
     port,
     feishu: readFeishuConfig(),
+    budgetWebhook: readBudgetWebhookConfig(),
     databasePath: resolve(root, process.env.DATABASE_PATH ?? 'data/billing.sqlite'),
   };
 }

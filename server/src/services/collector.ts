@@ -10,9 +10,9 @@ import {
 import { calculate, validateUsage } from '@/services/calculation';
 import { Store } from '@/repositories/billing-store';
 import { randomUUID } from 'node:crypto';
-import { setTimeout as delay } from 'node:timers/promises';
-import type { BillingCycle, CloudflareProvider, NotificationSender, UsageReport } from '@/types';
+import type { BillingCycle, CloudflareProvider, NotificationExtension, UsageReport } from '@/types';
 import { financialPoint, isRealtimeObservation, recoverBillingTimeline } from '@/services/timeline';
+import { NotificationDispatcher } from '@/services/notifications';
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 export class Collector {
@@ -21,14 +21,18 @@ export class Collector {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private stopped = true;
   private readonly leaseOwner = randomUUID();
+  private readonly notifications: NotificationDispatcher;
   constructor(
     readonly store: Store,
     readonly provider: CloudflareProvider,
     readonly clock: () => Date = () => new Date(),
-    private readonly sendNotification?: NotificationSender,
-  ) {}
+    extensions: NotificationExtension[] = [],
+  ) {
+    this.notifications = new NotificationDispatcher(store, extensions, clock);
+  }
   async start() {
     this.stopped = false;
+    this.notifications.start();
     try {
       await this.tick();
     } finally {
@@ -37,6 +41,7 @@ export class Collector {
   }
   stop() {
     this.stopped = true;
+    this.notifications.stop();
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
     this.nextRun = null;
@@ -77,7 +82,7 @@ export class Collector {
     try {
       recoverBillingTimeline(this.store, now);
       if (!force && this.store.get('lastSlot') === slot) {
-        await this.deliverNotifications();
+        await this.notifications.deliver();
         return false;
       }
       this.store.set('lastAttempt', now.toISOString());
@@ -148,58 +153,36 @@ export class Collector {
               }
             : null,
         });
-        if (this.sendNotification)
-          this.store.enqueueNotification({
-            id: `usage:${realtime.snapshotId}`,
-            cycle,
-            point,
-            warnings: [...new Set([...(realtime.report.warnings ?? []), ...this.store.errors()])],
-          });
+        this.notifications.enqueue({
+          id: `usage:${realtime.snapshotId}`,
+          cycle,
+          point,
+          warnings: [...new Set([...(realtime.report.warnings ?? []), ...this.store.errors()])],
+        });
       } else {
         if (cycle && realtime) {
           const reason = `${today} 用量：本轮未取得当前日期的有效实时采样`;
           realtimeFailures.push(reason);
           this.store.fail(`usage:${cycle.id}:${today}`, reason, now.toISOString());
         }
-        if (this.sendNotification)
-          this.store.enqueueNotification({
-            kind: 'collection_failure',
-            id: `collection-failure:${slot}`,
-            attemptedAt: now.toISOString(),
-            slot,
-            cycle,
-            errors: realtimeFailures.length ? realtimeFailures : ['本轮未取得完整的当天用量'],
-            lastSuccessfulAt: this.store.lastCollectedAt(),
-          });
+        this.notifications.enqueue({
+          kind: 'collection_failure',
+          id: `collection-failure:${slot}`,
+          attemptedAt: now.toISOString(),
+          slot,
+          cycle,
+          errors: realtimeFailures.length ? realtimeFailures : ['本轮未取得完整的当天用量'],
+          lastSuccessfulAt: this.store.lastCollectedAt(),
+        });
       }
       this.store.set('lastSlot', slot);
       if (this.store.errors().length === 0) this.store.set('lastSuccess', now.toISOString());
-      await this.deliverNotifications();
+      await this.notifications.deliver();
       return true;
     } finally {
       clearInterval(heartbeat);
       this.store.releaseLease(this.leaseOwner);
       this.running = false;
-    }
-  }
-  /** Delivery is serialized under the collection lease; failures never alter billing job state. */
-  private async deliverNotifications() {
-    if (!this.sendNotification) return;
-    const pending = this.store.pendingNotifications(this.clock().toISOString());
-    for (const [index, { notification }] of pending.entries()) {
-      // Backlogs are drained conservatively, at most one request per second.
-      if (index > 0) await delay(1000);
-      try {
-        await this.sendNotification(notification);
-      } catch (error) {
-        this.store.retryNotification(
-          notification.id,
-          nextSlot(this.clock()).toISOString(),
-          message(error),
-        );
-        break;
-      }
-      this.store.markNotificationSent(notification.id, this.clock().toISOString());
     }
   }
   private async fetchUsage(

@@ -4,6 +4,7 @@ import { Store } from '@/repositories/billing-store';
 import { Collector } from '@/services/collector';
 import { dashboard } from '@/services/dashboard';
 import { readFeishuConfig } from '@/config';
+import { createFeishuExtension } from '@/resources/notifications';
 import type { BillingCycle, Notification, CloudflareProvider } from '@/types';
 
 const cycle: BillingCycle = {
@@ -38,11 +39,11 @@ test('each successful collection sends after saving, including unchanged amounts
   };
   try {
     const provider = fixture(() => now);
-    await new Collector(store, provider, () => now, sender).tick();
-    await new Collector(store, provider, () => now, sender).tick();
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick();
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick();
     assert.equal(sent.length, 1);
     now = new Date('2026-10-01T12:10:00Z');
-    await new Collector(store, provider, () => now, sender).tick();
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick();
     assert.equal(sent.length, 2);
     assert.notEqual(sent[0]!.id, sent[1]!.id);
     const [first, second] = sent;
@@ -65,7 +66,7 @@ test('delivery failure leaves billing successful and retries the original messag
     if (attempted.length === 1) throw new Error('飞书 HTTP 503');
   };
   try {
-    let collector = new Collector(store, provider, () => now, sender);
+    let collector = new Collector(store, provider, () => now, [createFeishuExtension(sender)]);
     await collector.tick();
     assert.deepEqual(store.errors(), []);
     assert.equal(store.get('lastSuccess'), now.toISOString());
@@ -73,7 +74,7 @@ test('delivery failure leaves billing successful and retries the original messag
     assert.equal(view.totals.complete, true);
     assert.ok(view.collection.warnings.some((warning) => warning.includes('飞书')));
     now = new Date('2026-10-01T12:01:00Z');
-    collector = new Collector(store, provider, () => now, sender);
+    collector = new Collector(store, provider, () => now, [createFeishuExtension(sender)]);
     await collector.tick();
     assert.equal(attempted.length, 1);
     now = new Date('2026-10-01T12:10:00Z');
@@ -119,7 +120,12 @@ test('historical backfill is summarized once; incomplete realtime data emits fai
           : async (value: Notification) => {
               sent.push(value);
             };
-      await new Collector(store, provider, () => now, send).tick();
+      await new Collector(
+        store,
+        provider,
+        () => now,
+        send ? [createFeishuExtension(send)] : [],
+      ).tick();
       assert.equal(queried, 2);
       assert.equal(sent.length, mode === 'disabled' ? 0 : 1);
       assert.deepEqual(store.pendingNotifications(now.toISOString()), []);
@@ -158,17 +164,17 @@ test('failed rounds notify once per UTC slot, retry their original failure, and 
     sent.push(notification);
   };
   try {
-    await new Collector(store, provider, () => now, sender).tick();
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick();
     assert.equal(store.get('lastSuccess'), null);
     const original = store.pendingNotifications('2026-10-01T12:10:00.000Z')[0]!.notification;
     assert.ok(original.kind === 'collection_failure');
     assert.equal(original.lastSuccessfulAt, null);
-    await new Collector(store, provider, () => now, sender).tick();
-    await new Collector(store, provider, () => now, sender).tick(true);
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick();
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick(true);
     assert.equal(store.pendingNotifications('2026-10-01T12:10:00.000Z').length, 1);
     now = new Date('2026-10-01T12:10:00Z');
     deliver = true;
-    await new Collector(store, provider, () => now, sender).tick();
+    await new Collector(store, provider, () => now, [createFeishuExtension(sender)]).tick();
     assert.equal(sent.length, 2);
     assert.deepEqual(sent[0], original);
     assert.notEqual(sent[0]!.id, sent[1]!.id);
@@ -194,14 +200,11 @@ test('cycle failures notify without a cache or after expiry, but a valid cached 
     const sent: Notification[] = [];
     try {
       if (cached) store.saveCycle(cached);
-      await new Collector(
-        store,
-        provider,
-        () => now,
-        async (n) => {
+      await new Collector(store, provider, () => now, [
+        createFeishuExtension(async (n) => {
           sent.push(n);
-        },
-      ).tick();
+        }),
+      ]).tick();
       assert.equal(sent.length, 1);
       const result = sent[0]!;
       if (cached === cycle) {
@@ -231,14 +234,11 @@ test('only current realtime errors enter failure alerts; prior warnings and noti
   const sent: Notification[] = [];
   try {
     store.fail('old-task', '旧历史数据错误', '2026-09-30T00:00:00.000Z');
-    await new Collector(
-      store,
-      provider,
-      () => now,
-      async (n) => {
+    await new Collector(store, provider, () => now, [
+      createFeishuExtension(async (n) => {
         sent.push(n);
-      },
-    ).tick();
+      }),
+    ]).tick();
     assert.equal(sent.length, 1);
     const result = sent[0]!;
     assert.ok(result.kind === 'collection_failure');
