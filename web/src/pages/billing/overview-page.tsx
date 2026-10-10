@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChartLine } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { BillingChart } from '@/components/billing/billing-chart';
 import { HistoryTable } from '@/components/billing/history-table';
@@ -91,10 +91,9 @@ export function OverviewPage() {
                       <NavLink
                         to={serviceTrendPath(item.service)}
                         aria-label={`查看 ${item.service} 费用趋势`}
-                        className="inline-flex items-center gap-2 rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                        className="inline-flex rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {item.service}
-                        <ChartLine className="size-4 text-muted-foreground" aria-hidden="true" />
                       </NavLink>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">

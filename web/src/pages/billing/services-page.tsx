@@ -1,4 +1,3 @@
-import { ChartLine } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -58,7 +57,7 @@ export function ServicesPage() {
                     <NavLink
                       to={serviceTrendPath(item.service, item.key)}
                       aria-label={`查看 ${item.service} · ${item.name} 趋势`}
-                      className="inline-flex items-center gap-3 rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                      className="inline-flex rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span>
                         <span className="block font-medium">{item.service}</span>
@@ -66,7 +65,6 @@ export function ServicesPage() {
                           {item.name}
                         </span>
                       </span>
-                      <ChartLine className="size-4 text-muted-foreground" aria-hidden="true" />
                     </NavLink>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
