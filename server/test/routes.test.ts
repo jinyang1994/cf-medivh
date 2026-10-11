@@ -645,3 +645,34 @@ test('header language and full settings share the notification language', async 
     language: 'zh-CN',
   });
 });
+
+test('social visibility is saved, validated, and exposed without notification credentials', async (t) => {
+  const { request } = await fixture(t);
+  assert.deepEqual(await (await request('/api/settings/appearance')).json(), {
+    hideSocialIcons: false,
+  });
+  const save = (hideSocialIcons: unknown) =>
+    request('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: 'en',
+        hideSocialIcons,
+        feishu: { enabled: false },
+        budget: { enabled: false, thresholdCents: 30000 },
+      }),
+    });
+  assert.equal((await save(true)).status, 200);
+  assert.equal((await save('false')).status, 400);
+  const read = await request('/api/settings/appearance');
+  assertHeaders(read, true);
+  assert.deepEqual(await read.json(), { hideSocialIcons: true });
+  assert.equal((await save(undefined)).status, 200);
+  assert.deepEqual(await (await request('/api/settings/appearance')).json(), {
+    hideSocialIcons: true,
+  });
+  assert.equal((await save(false)).status, 200);
+  assert.deepEqual(await (await request('/api/settings/appearance')).json(), {
+    hideSocialIcons: false,
+  });
+});

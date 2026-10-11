@@ -1,3 +1,4 @@
+import { useHideSocialIcons } from '@/hooks/use-appearance';
 import { displayText } from '@/utils/display-text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLayoutEffect, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ import { timestamp } from '@/utils/format';
 
 export function BillingLayout() {
   const { t } = useLingui();
+  const hideSocialIcons = useHideSocialIcons();
 
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -69,19 +71,21 @@ export function BillingLayout() {
             ))}
           </nav>
           <div className="ml-auto flex flex-wrap items-center gap-3">
-            <Button variant="ghost" size="icon-sm" asChild>
-              <a
-                href="https://x.com/jinyang1994"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={t`访问我的 X 主页`}
-                title={t`X 主页`}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.64 7.584H.47l8.6-9.835L0 1.154h7.594l5.243 6.932Zm-1.29 19.49h2.039L6.487 3.24H4.3Z" />
-                </svg>
-              </a>
-            </Button>
+            {!hideSocialIcons && (
+              <Button variant="ghost" size="icon-sm" asChild>
+                <a
+                  href="https://x.com/jinyang1994"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t`访问我的 X 主页`}
+                  title={t`X 主页`}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.64 7.584H.47l8.6-9.835L0 1.154h7.594l5.243 6.932Zm-1.29 19.49h2.039L6.487 3.24H4.3Z" />
+                  </svg>
+                </a>
+              </Button>
+            )}
             <BillingNotifications
               cycleId={cycle?.id ?? null}
               errors={collection?.errors ?? []}

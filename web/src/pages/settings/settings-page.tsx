@@ -21,11 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { applySavedAppearance } from '@/hooks/use-appearance';
 import { applySavedLanguage } from '@/i18n';
 import type { Locale } from '@/utils/locale';
 
 type Settings = {
   language: Locale;
+  hideSocialIcons: boolean;
   feishu: {
     enabled: boolean;
     webhookConfigured: boolean;
@@ -70,6 +72,7 @@ export function SettingsPage() {
         const data = (await response.json()) as Settings;
         if (!controller.signal.aborted) {
           setSettings(data);
+          applySavedAppearance(data.hideSocialIcons);
           setFeishuUrl(data.feishu.webhookUrl);
           setBudgetUrl(data.budget.webhookUrl);
           setThreshold(String(data.budget.thresholdCents));
@@ -105,6 +108,7 @@ export function SettingsPage() {
         signal: AbortSignal.timeout(10000),
         body: JSON.stringify({
           language: settings.language,
+          hideSocialIcons: settings.hideSocialIcons,
           feishu: {
             enabled: settings.feishu.enabled,
             webhookUrl: feishuUrl,
@@ -126,6 +130,7 @@ export function SettingsPage() {
       }
       setSettings(data);
       applySavedLanguage(data.language);
+      applySavedAppearance(data.hideSocialIcons);
       setFeishuUrl(data.feishu.webhookUrl);
       setSecret(null);
       setShowSecret(false);
@@ -186,31 +191,47 @@ export function SettingsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Field>
-                    <FieldLabel htmlFor="application-language">
-                      <Trans>语言</Trans>
-                    </FieldLabel>
-                    <Select
-                      value={settings.language}
-                      onValueChange={(value) => {
-                        if (value === 'en' || value === 'zh-CN') {
-                          setSettings({ ...settings, language: value });
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="application-language">
+                        <Trans>语言</Trans>
+                      </FieldLabel>
+                      <Select
+                        value={settings.language}
+                        onValueChange={(value) => {
+                          if (value === 'en' || value === 'zh-CN') {
+                            setSettings({ ...settings, language: value });
+                            if (status === 'saved') setStatus('ready');
+                          }
+                        }}
+                        disabled={status === 'saving'}
+                      >
+                        <SelectTrigger id="application-language">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          <SelectGroup>
+                            <SelectItem value="zh-CN">简体中文</SelectItem>
+                            <SelectItem value="en">English</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="hide-social-icons"
+                        checked={settings.hideSocialIcons}
+                        disabled={status === 'saving'}
+                        onCheckedChange={(checked) => {
+                          setSettings({ ...settings, hideSocialIcons: checked === true });
                           if (status === 'saved') setStatus('ready');
-                        }
-                      }}
-                      disabled={status === 'saving'}
-                    >
-                      <SelectTrigger id="application-language">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        <SelectGroup>
-                          <SelectItem value="zh-CN">简体中文</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
+                        }}
+                      />
+                      <FieldLabel htmlFor="hide-social-icons">
+                        <Trans>隐藏社交图标</Trans>
+                      </FieldLabel>
+                    </Field>
+                  </FieldGroup>
                 </CardContent>
               </Card>
               <Card>

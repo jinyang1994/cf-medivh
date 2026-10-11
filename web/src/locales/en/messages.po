@@ -773,7 +773,6 @@ msgstr "Subscription"
 msgid "设置"
 msgstr "Settings"
 
-#: src/components/billing/language-select.tsx
 #: src/pages/settings/settings-page.tsx
 msgid "设置加载或保存失败"
 msgstr "Could not load or save settings"
@@ -790,7 +789,6 @@ msgstr "Visit my X profile"
 msgid "该日期不在当前账期内或尚未到来"
 msgstr "This date is outside the current billing cycle or is in the future"
 
-#: src/components/billing/language-select.tsx
 #: src/pages/settings/settings-page.tsx
 #: src/utils/display-text.ts
 msgid "语言"
@@ -976,6 +974,10 @@ msgstr "Retry"
 #: src/pages/settings/settings-page.tsx
 msgid "隐藏密钥"
 msgstr "Hide secret"
+
+#: src/pages/settings/settings-page.tsx
+msgid "隐藏社交图标"
+msgstr "Hide social icons"
 
 #: src/pages/settings/settings-page.tsx
 msgid "预算 Webhook 地址"

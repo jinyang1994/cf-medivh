@@ -5,13 +5,15 @@ import { notificationLanguage, setNotificationLanguage } from '@/services/notifi
 export type NotificationDefaults = Pick<ReturnType<typeof loadConfig>, 'feishu' | 'budgetWebhook'>;
 const key = 'runtimeNotificationSettings';
 interface Settings {
+  hideSocialIcons: boolean;
   feishu: { enabled: boolean; webhookUrl: string; secret: string };
   budget: { enabled: boolean; webhookUrl: string; thresholdCents: number };
 }
 export function runtimeSettings(store: Store, defaults: NotificationDefaults): Settings {
   const saved = store.get(key);
-  if (saved) return JSON.parse(saved) as Settings;
+  if (saved) return { hideSocialIcons: false, ...JSON.parse(saved) } as Settings;
   return {
+    hideSocialIcons: false,
     feishu: {
       enabled: !!defaults.feishu,
       webhookUrl: defaults.feishu?.webhookUrl ?? '',
@@ -35,6 +37,7 @@ export function publicSettings(store: Store, defaults: NotificationDefaults) {
   const settings = runtimeSettings(store, defaults);
   return {
     language: notificationLanguage(store),
+    hideSocialIcons: settings.hideSocialIcons,
     feishu: {
       enabled: settings.feishu.enabled,
       webhookConfigured: !!settings.feishu.webhookUrl,
@@ -80,7 +83,7 @@ function replacement(value: unknown, previous: string): string {
   return value.trim() || previous;
 }
 export function saveRuntimeSettings(store: Store, defaults: NotificationDefaults, input: unknown) {
-  const data = record(input, ['language', 'feishu', 'budget']);
+  const data = record(input, ['language', 'hideSocialIcons', 'feishu', 'budget']);
   if (data.language !== 'en' && data.language !== 'zh-CN') throw new Error('invalid_language');
   const feishu = record(data.feishu, [
     'enabled',
@@ -90,6 +93,7 @@ export function saveRuntimeSettings(store: Store, defaults: NotificationDefaults
   ]);
   const budget = record(data.budget, ['enabled', 'webhookUrl', 'thresholdCents']);
   if (
+    (data.hideSocialIcons !== undefined && typeof data.hideSocialIcons !== 'boolean') ||
     typeof feishu.enabled !== 'boolean' ||
     typeof budget.enabled !== 'boolean' ||
     (feishu.clearSigningSecret !== undefined && typeof feishu.clearSigningSecret !== 'boolean')
@@ -97,6 +101,7 @@ export function saveRuntimeSettings(store: Store, defaults: NotificationDefaults
     throw new Error('invalid_settings');
   const previous = runtimeSettings(store, defaults);
   const settings: Settings = {
+    hideSocialIcons: (data.hideSocialIcons as boolean | undefined) ?? previous.hideSocialIcons,
     feishu: {
       enabled: feishu.enabled,
       webhookUrl: replacement(feishu.webhookUrl, previous.feishu.webhookUrl),

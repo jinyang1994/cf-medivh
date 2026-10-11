@@ -1,5 +1,6 @@
 import {
   publicSettings,
+  runtimeSettings,
   saveRuntimeSettings,
   type NotificationDefaults,
 } from '@/services/runtime-settings';
@@ -12,6 +13,15 @@ export function notificationSettingsRoute(
   defaults: NotificationDefaults = { feishu: undefined, budgetWebhook: undefined },
 ): Middleware {
   return async (ctx, next) => {
+    if (ctx.path === '/api/settings/appearance') {
+      if (ctx.method !== 'GET') {
+        ctx.status = 405;
+        ctx.set('Allow', 'GET');
+        return;
+      }
+      ctx.body = { hideSocialIcons: runtimeSettings(store, defaults).hideSocialIcons };
+      return;
+    }
     const fullSettings = ctx.path === '/api/settings';
     if (
       !fullSettings &&

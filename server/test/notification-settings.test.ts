@@ -46,6 +46,7 @@ test('runtime settings inherit env, preserve secrets, redact reads, validate ato
     assert.equal(notificationConfig(store, defaults).feishu?.secret, 'private-secret');
     const input = {
       language: 'en',
+      hideSocialIcons: true,
       feishu: { enabled: false, webhookUrl: '', signingSecret: '' },
       budget: {
         enabled: true,
@@ -53,7 +54,9 @@ test('runtime settings inherit env, preserve secrets, redact reads, validate ato
         thresholdCents: 12345,
       },
     };
+    assert.equal(publicSettings(store, defaults).hideSocialIcons, false);
     const view = saveRuntimeSettings(store, defaults, input);
+    assert.equal(view.hideSocialIcons, true);
     assert.doesNotMatch(JSON.stringify(view), /private-secret/);
     assert.equal(view.feishu.webhookUrl, defaults.feishu.webhookUrl);
     assert.equal(view.budget.webhookUrl, input.budget.webhookUrl);
@@ -87,6 +90,7 @@ test('runtime settings inherit env, preserve secrets, redact reads, validate ato
   }
   const reopened = new Store(path);
   try {
+    assert.equal(publicSettings(reopened, defaults).hideSocialIcons, true);
     assert.equal(
       notificationConfig(reopened, { feishu: undefined, budgetWebhook: undefined }).budgetWebhook
         ?.thresholdCents,

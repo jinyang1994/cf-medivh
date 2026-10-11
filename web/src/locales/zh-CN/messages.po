@@ -773,7 +773,6 @@ msgstr "订阅"
 msgid "设置"
 msgstr "设置"
 
-#: src/components/billing/language-select.tsx
 #: src/pages/settings/settings-page.tsx
 msgid "设置加载或保存失败"
 msgstr "设置加载或保存失败"
@@ -790,7 +789,6 @@ msgstr "访问我的 X 主页"
 msgid "该日期不在当前账期内或尚未到来"
 msgstr "该日期不在当前账期内或尚未到来"
 
-#: src/components/billing/language-select.tsx
 #: src/pages/settings/settings-page.tsx
 #: src/utils/display-text.ts
 msgid "语言"
@@ -976,6 +974,10 @@ msgstr "重试"
 #: src/pages/settings/settings-page.tsx
 msgid "隐藏密钥"
 msgstr "隐藏密钥"
+
+#: src/pages/settings/settings-page.tsx
+msgid "隐藏社交图标"
+msgstr "隐藏社交图标"
 
 #: src/pages/settings/settings-page.tsx
 msgid "预算 Webhook 地址"
