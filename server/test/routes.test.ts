@@ -481,3 +481,34 @@ test('downstream failures emit the Koa error event and return a sanitized JSON 5
   assert.deepEqual(await response.json(), { error: '服务暂时不可用' });
   assert.deepEqual(events, [{ error: failure, path: '/api/dashboard' }]);
 });
+
+test('daily service detail validates dates and reads stored data without collection', async (t) => {
+  const { store, request } = await fixture(t, undefined, () => new Date('2026-10-03T12:00:00Z'));
+  const cycle = {
+    id: 'daily-route',
+    start: '2026-10-01',
+    end: '2026-11-01',
+    currency: 'USD',
+    baseFee: 5,
+  };
+  store.saveCycle(cycle);
+  store.saveUsage(
+    cycle,
+    { date: '2026-10-01', observedAt: '2026-10-02T00:00:00Z', complete: true, meters: [] },
+    true,
+  );
+  const response = await request('/api/daily-services?date=2026-10-01');
+  assert.equal(response.status, 200);
+  const detail = await response.json();
+  assert.equal(detail.date, '2026-10-01');
+  assert.equal(detail.services[0].cost, 5);
+  for (const query of [
+    '',
+    '?date=2026-02-30',
+    '?date=2026-10-01&date=2026-10-02',
+    '?date=2026-10-01&extra=1',
+  ])
+    assert.equal((await request('/api/daily-services' + query)).status, 400);
+  for (const date of ['2026-09-30', '2026-11-01', '2026-10-04'])
+    assert.equal((await request('/api/daily-services?date=' + date)).status, 404);
+});

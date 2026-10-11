@@ -1,3 +1,5 @@
+import { dailyServices } from '@/services/daily-services';
+import { validDate } from '@/utils/dates';
 import type { Middleware } from 'koa';
 import { dashboard } from '@/services/dashboard';
 import { serviceTrend } from '@/services/service-trend';
@@ -10,6 +12,24 @@ export function apiRoutes(store: Store, collector: Collector): Middleware {
   return async (ctx, next) => {
     if (ctx.path === '/api/health') {
       ctx.body = { ok: true, collecting: collector.running };
+      return;
+    }
+    if (ctx.path === '/api/daily-services' && ctx.method === 'GET') {
+      const query = new URLSearchParams(ctx.querystring);
+      const date = query.get('date');
+      if (
+        !date ||
+        !validDate(date) ||
+        query.getAll('date').length !== 1 ||
+        [...query.keys()].some((key) => key !== 'date')
+      ) {
+        ctx.status = 400;
+        ctx.body = { error: '请选择有效的日期' };
+        return;
+      }
+      const detail = dailyServices(store, date, collector.clock());
+      ctx.status = detail ? 200 : 404;
+      ctx.body = detail ?? { error: '该日期不在当前账期内或尚未到来' };
       return;
     }
     if (ctx.path === '/api/dashboard' && ctx.method === 'GET') {

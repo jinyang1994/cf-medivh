@@ -190,6 +190,42 @@ export class Store {
       ).map((r) => [r.date, { report: JSON.parse(r.payload), finalized: !!r.finalized }]),
     );
   }
+  /** Bounded daily calculation input; omit bulky raw provider responses. */
+  usageForCalculation(
+    cycleId: string,
+    start: string,
+    through: string,
+    observedThrough: string,
+  ): Map<string, DailyUsage> {
+    const rows = this.db
+      .prepare(
+        `
+      SELECT date, finalized, json_object(
+        'date', date,
+        'observedAt', json_extract(payload, '$.observedAt'),
+        'complete', json_extract(payload, '$.complete'),
+        'meters', json_extract(payload, '$.meters'),
+        'source', json_extract(payload, '$.source')
+      ) AS payload
+      FROM daily_usage
+      WHERE cycle_id=? AND date>=? AND date<=?
+        AND julianday(json_extract(payload, '$.observedAt'))<=julianday(?)
+      ORDER BY date
+    `,
+      )
+      .all(cycleId, start, through, observedThrough) as {
+      date: string;
+      finalized: number;
+      payload: string;
+    }[];
+    return new Map(
+      rows.map((row) => {
+        const report = JSON.parse(row.payload) as UsageReport;
+        report.complete = !!report.complete;
+        return [row.date, { report, finalized: !!row.finalized }];
+      }),
+    );
+  }
   /** Read only the evidence needed by the one-time timeline recovery, excluding large raw analytics. */
   usageSnapshotEvidence(
     cycleId: string,

@@ -1,3 +1,5 @@
+import { NavLink, useNavigate } from 'react-router';
+import { BILLING_PATHS } from '@/constants/billing-navigation';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -11,6 +13,7 @@ import type { Dashboard } from '@/types/billing';
 import { date, money } from '@/utils/format';
 
 export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number }) {
+  const navigate = useNavigate();
   const rows = [...data.history]
     .filter((item) => item.date < data.today)
     .reverse()
@@ -27,8 +30,23 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
       </TableHeader>
       <TableBody>
         {rows.map((item) => (
-          <TableRow key={item.date}>
-            <TableCell className="whitespace-nowrap">{date(item.date)}</TableCell>
+          <TableRow
+            key={item.date}
+            className="cursor-pointer"
+            onClick={(event) => {
+              if (!(event.target as HTMLElement).closest('a, button'))
+                void navigate(`${BILLING_PATHS.history}/${item.date}`);
+            }}
+          >
+            <TableCell className="whitespace-nowrap">
+              <NavLink
+                to={`${BILLING_PATHS.history}/${item.date}`}
+                className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`查看 ${date(item.date)} 服务明细`}
+              >
+                {date(item.date)}
+              </NavLink>
+            </TableCell>
             <TableCell className="text-right tabular-nums">
               {money(item.localTotal, data.currency, true)}
             </TableCell>

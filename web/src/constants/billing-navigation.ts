@@ -3,6 +3,7 @@ export const BILLING_PATHS = {
   services: '/billing/services',
   serviceTrend: '/billing/services/trend',
   history: '/billing/history',
+  dailyServices: '/billing/history/:date',
 } as const;
 
 export function serviceTrendPath(service: string, meter?: string) {

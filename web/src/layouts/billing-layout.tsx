@@ -50,7 +50,8 @@ export function BillingLayout() {
                 key={path}
                 variant={
                   pathname === path ||
-                  (path === BILLING_PATHS.services && pathname.startsWith(`${path}/`))
+                  ((path === BILLING_PATHS.services || path === BILLING_PATHS.history) &&
+                    pathname.startsWith(`${path}/`))
                     ? 'secondary'
                     : 'ghost'
                 }

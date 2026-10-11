@@ -251,3 +251,24 @@ export interface Dashboard {
     pendingOfficialDates: string[];
   };
 }
+
+export interface DailyServices {
+  date: string;
+  cycle: BillingCycle;
+  currency: string;
+  complete: boolean;
+  services: {
+    key: string;
+    service: string;
+    name: string;
+    unit: string;
+    pricing: MeterPricing;
+    quantity: number | null;
+    cost: number | null;
+    /** Selected day usage above the remaining allowance, before billing-unit rounding. */
+    overageQuantity: number | null;
+    /** Actual usage in the allowance window, including usage above the free limit. */
+    allowanceUsed: number | null;
+    allowanceRatio: number | null;
+  }[];
+}

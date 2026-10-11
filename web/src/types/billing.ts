@@ -1,6 +1,7 @@
 import type { Dashboard } from '@server/types';
 
 export type {
+  DailyServices,
   Dashboard,
   Reconciliation,
   ResourceUsageTrend,

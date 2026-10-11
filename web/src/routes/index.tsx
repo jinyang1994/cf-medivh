@@ -1,3 +1,4 @@
+import { DailyServicesPage } from '@/pages/billing/daily-services-page';
 import { Navigate, Route, Routes } from 'react-router';
 import { BILLING_PATHS } from '@/constants/billing-navigation';
 import { BillingLayout } from '@/layouts/billing-layout';
@@ -14,6 +15,7 @@ export function AppRoutes() {
         <Route path={BILLING_PATHS.services} element={<ServicesPage />} />
         <Route path={BILLING_PATHS.serviceTrend} element={<ServiceTrendPage />} />
         <Route path={BILLING_PATHS.history} element={<HistoryPage />} />
+        <Route path={BILLING_PATHS.dailyServices} element={<DailyServicesPage />} />
         <Route path="*" element={<Navigate to={BILLING_PATHS.overview} replace />} />
       </Route>
     </Routes>
