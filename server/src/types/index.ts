@@ -31,6 +31,8 @@ export interface UsageMeter {
   unit: string;
   /** Cumulative quantity within this UTC day, never the delta since the prior poll. */
   quantity: number;
+  /** How the persisted daily quantity was obtained; absent on legacy records. */
+  quantitySource?: 'official-aggregate' | 'resource-sum';
   pricing: MeterPricing;
 }
 

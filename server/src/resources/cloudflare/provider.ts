@@ -14,6 +14,12 @@ import {
   type AnalyticsData,
   type AnalyticsRow,
 } from '@/resources/cloudflare/analytics';
+import {
+  aggregateMeters,
+  aggregateQuantity,
+  preferOfficialAggregates,
+  resourceFields,
+} from '@/resources/cloudflare/usage-source';
 import { meterDefinition, priceForServiceName } from '@/services/pricing';
 import { PRICE_CATALOG_VERSION } from '@/constants/pricing';
 import { marginalUsageCharge } from '@/services/calculation';
@@ -293,11 +299,18 @@ class Provider implements CloudflareProvider {
     }
     return bill;
   }
-  private async analytics(dataset: string, date: string, end: string): Promise<AnalyticsRow[]> {
+  private async analytics(
+    dataset: string,
+    date: string,
+    end: string,
+    selection = datasets[dataset],
+  ): Promise<AnalyticsRow[]> {
     const response = await this.fetcher(API + '/graphql', {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: analyticsQuery(this.config.accountId, dataset, date, end) }),
+      body: JSON.stringify({
+        query: analyticsQuery(this.config.accountId, dataset, date, end, selection),
+      }),
       signal: AbortSignal.timeout(30_000),
     });
     if (!response.ok) throw new Error(`${dataset} HTTP ${response.status}`);
@@ -309,6 +322,18 @@ class Provider implements CloudflareProvider {
     const rows = json.data?.viewer?.accounts?.[0]?.[dataset];
     if (!Array.isArray(rows)) throw new Error(`${dataset} 未返回用量`);
     if (rows.length >= 10000) throw new Error(`${dataset} 超出单次查询上限，需要缩小时间窗口`);
+    // Missing or invalid fields cannot silently turn a partial resource response into zero.
+    for (const [, operation, fields] of (selection!.includes('dimensions')
+      ? selection!
+      : ''
+    ).matchAll(/(sum|max|uniq)\s*\{([^}]+)\}/g)) {
+      for (const row of rows)
+        for (const field of fields!.trim().split(/\s+/)) {
+          const value = row[operation as 'sum' | 'max' | 'uniq']?.[field];
+          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
+            throw new Error(`${dataset} ${field} 用量无效`);
+        }
+    }
     return rows;
   }
   async getUsage(cycle: BillingCycle, date: string): Promise<UsageReport> {
@@ -321,6 +346,9 @@ class Provider implements CloudflareProvider {
     if (start >= until) throw new Error('用量时间窗口无效');
     const end = utcDay(until).toISOString();
     const data: AnalyticsData = {};
+    const summaries: AnalyticsData = {};
+    const aggregateFailures: string[] = [];
+    const groupedOfficial = new Set<string>();
     const failures: string[] = [];
     const names = Object.keys(datasets);
     let cursor = 0;
@@ -329,7 +357,76 @@ class Provider implements CloudflareProvider {
         while (cursor < names.length) {
           const name = names[cursor++]!;
           try {
-            data[name] = await this.analytics(name, date, end);
+            const fields = aggregateMeters[name];
+            const requiredFields =
+              datasets[name]!.match(/sum\s*\{([^}]+)\}/)?.[1]
+                ?.trim()
+                .split(/\s+/) ?? [];
+            const resourceField = resourceFields[name];
+            const selection = datasets[name]!;
+            const resourceSelection = resourceField
+              ? selection.includes('dimensions')
+                ? selection.replace('dimensions {', `dimensions { ${resourceField}`)
+                : `${selection} dimensions { ${resourceField} }`
+              : selection;
+            if (fields) {
+              try {
+                const rows = await this.analytics(
+                  name,
+                  date,
+                  end,
+                  selection.replace(/\s*dimensions\s*\{[^}]*\}/, ''),
+                );
+                summaries[name] = rows;
+                if (requiredFields.some((field) => aggregateQuantity(rows, field) === null))
+                  throw new Error('汇总字段缺失或无效');
+                data[name] = rows;
+              } catch (error) {
+                aggregateFailures.push(
+                  `${name}: ${error instanceof Error ? error.message : String(error)}`,
+                );
+              }
+              // Containers' regional egress tiers still need resource/region detail.
+              if (
+                requiredFields.some(
+                  (field) => aggregateQuantity(summaries[name], field) === null,
+                ) ||
+                name === 'containersUsageAdaptiveGroups'
+              ) {
+                if (!resourceField) throw new Error('官方汇总不可用且不支持资源拆分');
+                if (name === 'containersUsageAdaptiveGroups') {
+                  try {
+                    data[name] = await this.analytics(name, date, end, selection);
+                    groupedOfficial.add(name);
+                  } catch {
+                    data[name] = await this.analytics(name, date, end, resourceSelection);
+                  }
+                } else data[name] = await this.analytics(name, date, end, resourceSelection);
+              }
+            } else {
+              try {
+                data[name] = await this.analytics(name, date, end, selection);
+                if (resourceField) groupedOfficial.add(name);
+              } catch (error) {
+                if (!resourceField) throw error;
+                aggregateFailures.push(
+                  `${name}: ${error instanceof Error ? error.message : String(error)}`,
+                );
+                data[name] = await this.analytics(name, date, end, resourceSelection);
+              }
+              if (name === 'workersInvocationsByOwnerAndScriptGroups') {
+                const rows = data[name]!;
+                const value =
+                  rows.length === 0
+                    ? 0
+                    : rows.length === 1
+                      ? rows[0]?.uniq?.distinctDynamicWorkerCount
+                      : undefined;
+                if (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
+                  throw new Error('动态 Worker 官方汇总无效，且不支持资源拆分');
+                summaries[name] = rows;
+              }
+            }
           } catch (e) {
             failures.push(`${name}: ${e instanceof Error ? e.message : String(e)}`);
           }
@@ -337,6 +434,37 @@ class Provider implements CloudflareProvider {
       }),
     );
     const { quantities, warnings } = quantitiesFromAnalytics(data, until);
+    const quantitySources = preferOfficialAggregates(quantities, summaries);
+    const groupedKeys: Record<string, string[]> = {
+      containersUsageAdaptiveGroups: [
+        'cloudchamber_memory_usage',
+        'cloudchamber_disk_usage',
+        'cloudchamber_cpu_usage',
+        'cloudchamber_egress_na_eu',
+        'cloudchamber_egress_oceania',
+        'cloudchamber_egress_other',
+      ],
+      r2OperationsAdaptiveGroups: [
+        'r2_class_a_operations',
+        'r2_class_b_operations',
+        'r2_class_a_operations_infrequent_access',
+        'r2_class_b_operations_infrequent_access',
+        'r2_retrieval_infrequent_access',
+      ],
+      kvOperationsAdaptiveGroups: [
+        'worker_kv_reads',
+        'worker_kv_writes',
+        'worker_kv_lists',
+        'worker_kv_deletes',
+      ],
+    };
+    for (const dataset of groupedOfficial)
+      for (const key of groupedKeys[dataset] ?? []) quantitySources[key] = 'official-aggregate';
+    if (
+      groupedOfficial.has('durableObjectsInvocationsAdaptiveGroups') &&
+      aggregateQuantity(summaries.durableObjectsPeriodicGroups, 'inboundWebsocketMsgCount') !== null
+    )
+      quantitySources.worker_durable_objects_requests = 'official-aggregate';
     failures.push(...warnings);
     try {
       const response = await this.request<{
@@ -356,13 +484,56 @@ class Provider implements CloudflareProvider {
         (c) => c.calculation === 'count',
       )?.aggregates;
       if (!aggregates) throw new Error('日志计数查询未返回汇总');
-      quantities.worker_observability_events = sumBy(aggregates, (aggregate) => aggregate.value);
+      if (
+        aggregates.length !== 1 ||
+        !Number.isFinite(aggregates[0]!.value) ||
+        aggregates[0]!.value < 0
+      )
+        throw new Error('日志计数汇总无效');
+      quantities.worker_observability_events = aggregates[0]!.value;
+      quantitySources.worker_observability_events = 'official-aggregate';
       if (until < utcDay(observed).subtract(7, 'day').valueOf())
         warnings.push(
           '启动前超过 7 天的 Workers Logs 已超出保留期；历史日志量不完整，日志费用仅从可用记录估算',
         );
     } catch (e) {
-      failures.push(`Workers 日志：${e instanceof Error ? e.message : String(e)}`);
+      aggregateFailures.push(`Workers 日志：${e instanceof Error ? e.message : String(e)}`);
+      try {
+        const trend = await this.getResourceTrend(
+          cycle,
+          'Workers Logs',
+          'worker_observability_events',
+          'daily',
+          {
+            start: new Date(start).toISOString(),
+            end,
+          },
+        );
+        const coverage = [...(trend.coverage ?? [])].sort((a, b) => a.start.localeCompare(b.start));
+        let covered = start;
+        for (const window of coverage) {
+          if (!window.complete || Date.parse(window.start) > covered) break;
+          covered = Math.max(covered, Date.parse(window.end));
+        }
+        if (
+          trend.unavailableReason ||
+          covered < until ||
+          Date.parse(trend.start) !== start ||
+          Date.parse(trend.end) !== until
+        )
+          throw new Error('子资源用量未覆盖完整时间范围');
+        let total = 0;
+        for (const point of trend.points)
+          for (const quantity of Object.values(point.quantities)) {
+            if (quantity === null || !Number.isFinite(quantity) || quantity < 0)
+              throw new Error('子资源用量无效');
+            total += quantity;
+          }
+        quantities.worker_observability_events = total;
+        quantitySources.worker_observability_events = 'resource-sum';
+      } catch (error) {
+        failures.push(`Workers 日志：${error instanceof Error ? error.message : String(error)}`);
+      }
     }
     let knownRows: BillableRow[] = [];
     try {
@@ -393,7 +564,7 @@ class Provider implements CloudflareProvider {
         if (quantity > 0) failures.push(`尚未接入单价：${key}`);
         continue;
       }
-      meters.push({ ...definition, quantity });
+      meters.push({ ...definition, quantity, quantitySource: quantitySources[key] });
     }
     for (const key of activeKeys)
       if (!(key in quantities)) failures.push(`未能取得活跃服务的用量：${key}`);
@@ -406,6 +577,8 @@ class Provider implements CloudflareProvider {
       source: 'analytics',
       raw: {
         analytics: data,
+        officialAggregates: summaries,
+        aggregateFailures,
         priceCatalogVersion: PRICE_CATALOG_VERSION,
         pricingSource: 'server/src/constants/pricing.ts',
       },

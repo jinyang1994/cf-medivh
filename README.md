@@ -58,6 +58,8 @@ Cloudflare 的 [Billable Usage API](https://blog.cloudflare.com/billable-usage-a
 
 ### P4. 程序中断或接口失败，会不会丢掉判断依据？
 
+用量按相同计费项和 UTC 时间窗口优先保存 Cloudflare 官方统计汇总（包括明确返回的零值）；汇总缺失时才累加子资源明细，存储类用量按资源采样和时间计算。每条新用量记录包含 `quantitySource` 来源标记；两种来源均不可用时标记采集不完整，不当作零用量。官方账单仍独立用于费用核对。
+
 用量快照、每日对账结果和通知状态保存在本地 SQLite 中。重启后会尝试补齐历史缺失数据；
 
 ### P5. 7 天的 Workers Logs 历史缺口

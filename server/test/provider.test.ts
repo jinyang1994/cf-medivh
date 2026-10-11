@@ -7,6 +7,7 @@ import {
   type BillableRow,
 } from '@/resources/cloudflare/provider';
 import {
+  type AnalyticsRow,
   analyticsQuery,
   quantitiesFromAnalytics,
   datasets,
@@ -347,6 +348,8 @@ function providerFixture(
   options: {
     unknown?: boolean;
     graphFailure?: string;
+    telemetryMissing?: boolean;
+    graphRows?: (dataset: string, query: string) => AnalyticsRow[];
     billingFailure?: boolean;
     metadataFailure?: boolean;
     workersPaid?: boolean;
@@ -399,14 +402,18 @@ function providerFixture(
       const dataset = Object.keys(datasets).find((name) => query.includes(`${name}(`))!;
       if (dataset === options.graphFailure)
         return Response.json({ errors: [{ message: 'dataset unavailable' }] });
-      return Response.json({ data: { viewer: { accounts: [{ [dataset]: [] }] } } });
+      return Response.json({
+        data: { viewer: { accounts: [{ [dataset]: options.graphRows?.(dataset, query) ?? [] }] } },
+      });
     }
     if (url.includes('/telemetry/query'))
       return Response.json({
         success: true,
         result: {
           run: { status: 'COMPLETED' },
-          calculations: [{ calculation: 'count', aggregates: [{ value: 0 }] }],
+          calculations: [
+            { calculation: 'count', aggregates: options.telemetryMissing ? [] : [{ value: 0 }] },
+          ],
         },
       });
     if (url.includes('/billable-usage?')) {
@@ -586,4 +593,116 @@ test('official readiness groups metric aliases without hiding a lagging product 
   assert.equal(official?.serviceCosts?.worker_standard_request, 3);
   assert.equal(official?.serviceCosts?.r2_class_b_operations, 4);
   assert.deepEqual((official?.raw as { records: BillableRow[] }).records, completeRows);
+});
+
+test('usage persists official zero without requesting child resources', async () => {
+  const queries: string[] = [];
+  const provider = providerFixture({
+    graphRows(dataset, query) {
+      if (dataset !== 'workersInvocationsAdaptive') return [];
+      queries.push(query);
+      return [{ sum: { requests: 0, cpuTimeUs: 2000 } }];
+    },
+  });
+  const report = await provider.getUsage(cycle, '2026-10-07');
+  assert.equal(report.complete, true);
+  assert.equal(queries.length, 1);
+  assert.ok(!queries[0]!.includes('scriptName'));
+  const requests = report.meters.find((m) => m.key === 'worker_standard_request')!;
+  assert.equal(requests.quantity, 0);
+  assert.equal(requests.quantitySource, 'official-aggregate');
+  assert.equal(report.meters.find((m) => m.key === 'worker_standard_cpu_ms')!.quantity, 2);
+});
+
+test('missing aggregate falls back to resource quantities in the same window', async () => {
+  const provider = providerFixture({
+    graphRows(dataset, query) {
+      if (dataset !== 'workersInvocationsAdaptive') return [];
+      if (!query.includes('scriptName')) throw new Error('aggregate unavailable');
+      return [
+        { dimensions: { scriptName: 'a' }, sum: { requests: 7, cpuTimeUs: 1000 } },
+        { dimensions: { scriptName: 'b' }, sum: { requests: 3, cpuTimeUs: 2000 } },
+      ];
+    },
+  });
+  const report = await provider.getUsage(cycle, '2026-10-07');
+  assert.equal(report.complete, true);
+  const requests = report.meters.find((m) => m.key === 'worker_standard_request')!;
+  assert.equal(requests.quantity, 10);
+  assert.equal(requests.quantitySource, 'resource-sum');
+  assert.equal(report.meters.find((m) => m.key === 'worker_standard_cpu_ms')!.quantity, 3);
+});
+
+test('available official fields retain precedence when another field needs resource fallback', async () => {
+  const provider = providerFixture({
+    graphRows(dataset, query) {
+      if (dataset !== 'workersInvocationsAdaptive') return [];
+      return query.includes('scriptName')
+        ? [{ dimensions: { scriptName: 'a' }, sum: { requests: 9, cpuTimeUs: 3000 } }]
+        : [{ sum: { requests: 0 } }];
+    },
+  });
+  const report = await provider.getUsage(cycle, '2026-10-07');
+  assert.equal(report.complete, true);
+  assert.equal(report.meters.find((m) => m.key === 'worker_standard_request')!.quantity, 0);
+  assert.equal(
+    report.meters.find((m) => m.key === 'worker_standard_request')!.quantitySource,
+    'official-aggregate',
+  );
+  assert.equal(report.meters.find((m) => m.key === 'worker_standard_cpu_ms')!.quantity, 3);
+  assert.equal(
+    report.meters.find((m) => m.key === 'worker_standard_cpu_ms')!.quantitySource,
+    'resource-sum',
+  );
+});
+
+test('invalid fallback is incomplete rather than recorded as a successful zero', async () => {
+  const provider = providerFixture({
+    graphRows(dataset, query) {
+      if (dataset !== 'workersInvocationsAdaptive') return [];
+      return query.includes('scriptName') ? [{ sum: { requests: 2 } }] : [{}];
+    },
+  });
+  const report = await provider.getUsage(cycle, '2026-10-07');
+  assert.equal(report.complete, false);
+});
+
+test('logs use complete child-resource coverage only when the official aggregate is missing', async () => {
+  const provider = providerFixture({ telemetryMissing: true });
+  provider.getResourceTrend = async () => ({
+    service: 'Workers Logs',
+    meterKey: 'worker_observability_events',
+    unit: 'events',
+    resolution: 'daily',
+    start: '2026-10-07T00:00:00.000Z',
+    end: '2026-10-08T00:00:00.000Z',
+    fetchedAt: '2026-10-08T12:00:00.000Z',
+    resources: [],
+    warnings: [],
+    unavailableReason: null,
+    points: [{ timestamp: '2026-10-07T00:00:00.000Z', quantities: { a: 4, b: 6 } }],
+    coverage: [
+      { start: '2026-10-07T00:00:00.000Z', end: '2026-10-08T00:00:00.000Z', complete: true },
+    ],
+  });
+  const report = await provider.getUsage(cycle, '2026-10-07');
+  assert.equal(report.complete, true);
+  const meter = report.meters.find((m) => m.key === 'worker_observability_events')!;
+  assert.equal(meter.quantity, 10);
+  assert.equal(meter.quantitySource, 'resource-sum');
+});
+
+test('grouped official R2 metrics avoid requesting bucket detail', async () => {
+  const queries: string[] = [];
+  const provider = providerFixture({
+    graphRows(dataset, query) {
+      if (dataset !== 'r2OperationsAdaptiveGroups') return [];
+      queries.push(query);
+      return [];
+    },
+  });
+  const report = await provider.getUsage(cycle, '2026-10-07');
+  assert.equal(report.complete, true);
+  assert.equal(queries.length, 1);
+  assert.ok(!queries[0]!.includes('bucketName'));
 });

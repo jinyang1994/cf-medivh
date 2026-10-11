@@ -37,12 +37,13 @@ export function analyticsQuery(
   dataset: string,
   date: string,
   end: string,
+  selection = datasets[dataset],
 ): string {
   const filter =
     dataset === 'workersInvocationsByOwnerAndScriptGroups'
       ? `date_geq:${JSON.stringify(date)},date_leq:${JSON.stringify(date)}`
       : `datetime_geq:${JSON.stringify(date + 'T00:00:00Z')},datetime_lt:${JSON.stringify(end)}${dataset === 'workersInvocationsAdaptive' ? ',status_neq:"internalError"' : ''}`;
-  return `{viewer{accounts(filter:{accountTag:${JSON.stringify(accountId)}}){${dataset}(limit:10000,filter:{${filter}}){${datasets[dataset]}}}}}`;
+  return `{viewer{accounts(filter:{accountTag:${JSON.stringify(accountId)}}){${dataset}(limit:10000,filter:{${filter}}){${selection}}}}}`;
 }
 
 const CLASS_A = new Set([
