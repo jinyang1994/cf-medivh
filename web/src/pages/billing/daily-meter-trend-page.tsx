@@ -1,5 +1,8 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ResourceUsageTrendContent } from '@/components/billing/resource-usage-trend';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +11,8 @@ import { date } from '@/utils/format';
 
 type Detail = { date: string; name: string; usage: ResourceUsageTrend; cost: ResourceCostTrend };
 export function DailyMeterTrendPage() {
+  const navigate = useNavigate();
+  const dashboard = useBillingDashboard();
   const { date: selected = '' } = useParams();
   const [params] = useSearchParams();
   const service = params.get('service') ?? '';
@@ -42,11 +47,56 @@ export function DailyMeterTrendPage() {
     setState(undefined);
     setAttempt((value) => value + 1);
   };
+  const selectedTime = Date.parse(selected);
+  const validDate =
+    Number.isFinite(selectedTime) && new Date(selectedTime).toISOString().slice(0, 10) === selected;
+  const adjacent = (offset: number) =>
+    validDate ? new Date(selectedTime + offset * 86_400_000).toISOString().slice(0, 10) : '';
+  const previous = adjacent(-1);
+  const next = adjacent(1);
+  const available = (day: string) =>
+    !!dashboard.cycle &&
+    !!day &&
+    day >= dashboard.cycle.start &&
+    day < dashboard.cycle.end &&
+    day <= dashboard.today;
+  const navigateDay = (day: string) =>
+    void navigate(`/billing/history/${day}/trend?${new URLSearchParams({ service, meter })}`);
   return (
     <>
-      <h2 className="text-2xl font-semibold tracking-tight">
-        {date(selected)} · {service} · {current?.data?.name ?? '计费项趋势'}
-      </h2>
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[1fr_minmax(0,auto)_1fr] sm:gap-4">
+        <Button
+          className="justify-self-start"
+          variant="ghost"
+          size="sm"
+          disabled={!available(previous)}
+          onClick={() => navigateDay(previous)}
+        >
+          <ChevronLeft />
+          前一天
+        </Button>
+        <h2 className="text-center text-base font-semibold tracking-tight sm:text-2xl">
+          <NavLink
+            to={`/billing/history/${selected}`}
+            className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`返回 ${date(selected)} 服务明细`}
+          >
+            {date(selected)}
+          </NavLink>
+          {' · '}
+          {service} · {current?.data?.name ?? '计费项趋势'}
+        </h2>
+        <Button
+          className="justify-self-end"
+          variant="ghost"
+          size="sm"
+          disabled={!available(next)}
+          onClick={() => navigateDay(next)}
+        >
+          后一天
+          <ChevronRight />
+        </Button>
+      </div>
       {(['usage', 'cost'] as const).map((metric) => (
         <Card key={metric}>
           <CardHeader>

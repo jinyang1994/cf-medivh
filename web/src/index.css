@@ -118,6 +118,9 @@
 }
 
 @layer base {
+  :is(button, [role="button"], [data-slot="button"]):not(:disabled):not([aria-disabled="true"]):not([data-disabled]) {
+    cursor: pointer;
+  }
   * {
     @apply border-border outline-ring/50;
     }
