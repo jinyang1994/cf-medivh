@@ -8,6 +8,8 @@
 
 <p align="center"><strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a></p>
 
+![面板](./images/20261011-145334.jpeg)
+
 ## Before you start
 
 This project was built primarily through **vibe coding**. If that concerns you, please do not use it.
