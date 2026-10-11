@@ -1,6 +1,10 @@
-# Cloudflare Medivh
+<p align="center">
+  <img src="./web/public/medivh.svg" alt="Cloudflare Medivh logo" width="120" height="120" />
+</p>
 
-一个可以自行部署的 Cloudflare 账单监控工具。
+<h1 align="center">Cloudflare Medivh</h1>
+
+<p align="center">一个可以自行部署的 Cloudflare 账单监控工具。</p>
 
 ## 事前说明
 
