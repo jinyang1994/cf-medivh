@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { NavLink, useNavigate, useParams } from 'react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import type { DailyServices } from '@/types/billing';
 import { date, money, quantity } from '@/utils/format';
 
 export function DailyServicesPage() {
+  const navigate = useNavigate();
   const { date: selected = '' } = useParams();
   const dashboard = useBillingDashboard();
   const [attempt, setAttempt] = useState(0);
@@ -78,10 +79,24 @@ export function DailyServicesPage() {
                   const hasAllowance = item.pricing.includedQuantity > 0;
                   const daily = item.pricing.allowancePeriod === 'day';
                   return (
-                    <TableRow key={item.key}>
+                    <TableRow
+                      key={item.key}
+                      className="cursor-pointer"
+                      onClick={(event) => {
+                        if (!(event.target as HTMLElement).closest('a, button'))
+                          void navigate(
+                            `/billing/history/${selected}/trend?${new URLSearchParams({ service: item.service, meter: item.key })}`,
+                          );
+                      }}
+                    >
                       <TableCell>
-                        <div className="font-medium">{item.service}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{item.name}</div>
+                        <NavLink
+                          to={`/billing/history/${selected}/trend?${new URLSearchParams({ service: item.service, meter: item.key })}`}
+                          className="block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <div className="font-medium">{item.service}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">{item.name}</div>
+                        </NavLink>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         <div>{item.quantity === null ? '待补全' : quantity(item.quantity)}</div>

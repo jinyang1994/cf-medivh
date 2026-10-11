@@ -512,3 +512,35 @@ test('daily service detail validates dates and reads stored data without collect
   for (const date of ['2026-09-30', '2026-11-01', '2026-10-04'])
     assert.equal((await request('/api/daily-services?date=' + date)).status, 404);
 });
+
+test('daily meter trend is read-only and validates the selected date and meter', async (t) => {
+  const { store, request } = await fixture(t, undefined, () => new Date('2026-10-03T12:00:00Z'));
+  store.saveCycle({
+    id: 'day-plot',
+    start: '2026-10-01',
+    end: '2026-11-01',
+    currency: 'USD',
+    baseFee: 5,
+  });
+  const response = await request(
+    '/api/daily-meter-trend?date=2026-10-01&service=' +
+      encodeURIComponent('订阅') +
+      '&meter=__base_fee',
+  );
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.cost.points.length, 144);
+  assert.equal(result.cost.end, '2026-10-02T00:00:00.000Z');
+  assert.equal(
+    (await request('/api/daily-meter-trend?date=2026-02-30&service=x&meter=x')).status,
+    400,
+  );
+  assert.equal(
+    (await request('/api/daily-meter-trend?date=2026-10-04&service=x&meter=x')).status,
+    404,
+  );
+  assert.equal(
+    (await request('/api/daily-meter-trend?date=2026-10-01&service=x&meter=x&meter=y')).status,
+    400,
+  );
+});

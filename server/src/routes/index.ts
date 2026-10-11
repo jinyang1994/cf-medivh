@@ -1,3 +1,4 @@
+import { dailyMeterTrend } from '@/services/daily-meter-trend';
 import { dailyServices } from '@/services/daily-services';
 import { validDate } from '@/utils/dates';
 import type { Middleware } from 'koa';
@@ -12,6 +13,30 @@ export function apiRoutes(store: Store, collector: Collector): Middleware {
   return async (ctx, next) => {
     if (ctx.path === '/api/health') {
       ctx.body = { ok: true, collecting: collector.running };
+      return;
+    }
+    if (ctx.path === '/api/daily-meter-trend' && ctx.method === 'GET') {
+      const query = new URLSearchParams(ctx.querystring);
+      const date = query.get('date');
+      const service = query.get('service');
+      const meter = query.get('meter');
+      if (
+        !date ||
+        !validDate(date) ||
+        !service?.trim() ||
+        !meter?.trim() ||
+        service.length > 200 ||
+        meter.length > 200 ||
+        ['date', 'service', 'meter'].some((key) => query.getAll(key).length !== 1) ||
+        [...query.keys()].some((key) => !['date', 'service', 'meter'].includes(key))
+      ) {
+        ctx.status = 400;
+        ctx.body = { error: '请选择有效的日期、服务和计费项' };
+        return;
+      }
+      const result = dailyMeterTrend(store, date, service, meter, collector.clock());
+      ctx.status = result ? 200 : 404;
+      ctx.body = result ?? { error: '未找到当日计费项' };
       return;
     }
     if (ctx.path === '/api/daily-services' && ctx.method === 'GET') {
