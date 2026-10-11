@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,9 +47,46 @@ export function DailyServicesPage() {
   }, [selected, dashboard, key]);
   const current = state?.key === key ? state : undefined;
   const data = current?.data;
+  const selectedTime = Date.parse(selected);
+  const validDate =
+    Number.isFinite(selectedTime) && new Date(selectedTime).toISOString().slice(0, 10) === selected;
+  const adjacent = (offset: number) =>
+    validDate ? new Date(selectedTime + offset * 86_400_000).toISOString().slice(0, 10) : '';
+  const previous = adjacent(-1);
+  const next = adjacent(1);
+  const available = (day: string) =>
+    !!dashboard.cycle &&
+    !!day &&
+    day >= dashboard.cycle.start &&
+    day < dashboard.cycle.end &&
+    day <= dashboard.today;
   return (
     <>
-      <h2 className="text-2xl font-semibold tracking-tight">{date(selected)} · 服务明细</h2>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+        <Button
+          className="justify-self-start"
+          variant="ghost"
+          size="sm"
+          disabled={!available(previous)}
+          onClick={() => void navigate(`/billing/history/${previous}`)}
+        >
+          <ChevronLeft />
+          前一天
+        </Button>
+        <h2 className="text-center text-base font-semibold tracking-tight sm:text-2xl">
+          {date(selected)} · 服务明细
+        </h2>
+        <Button
+          className="justify-self-end"
+          variant="ghost"
+          size="sm"
+          disabled={!available(next)}
+          onClick={() => void navigate(`/billing/history/${next}`)}
+        >
+          后一天
+          <ChevronRight />
+        </Button>
+      </div>
       <Card>
         <CardContent>
           {current?.error ? (
