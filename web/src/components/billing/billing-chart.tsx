@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { Badge } from '@/components/ui/badge';
@@ -24,16 +25,6 @@ type PlotPoint = {
   localTotal: number | null;
 };
 
-const dailyChartConfig = {
-  officialTotal: { label: '官方累计', color: 'var(--chart-5)' },
-  localTotal: { label: '本地累计', color: 'var(--chart-2)' },
-} satisfies ChartConfig;
-
-const tenMinuteChartConfig = {
-  currentTotal: { label: '官方账单 + 预测', color: 'var(--chart-5)' },
-  localTotal: { label: '本地数据 + 预测', color: 'var(--chart-2)' },
-} satisfies ChartConfig;
-
 function utcLabel(value: number, resolution: Resolution, sameDay = false) {
   const iso = new Date(value).toISOString();
   if (resolution === 'daily') return iso.slice(5, 10).replace('-', '/');
@@ -47,6 +38,27 @@ export function BillingChart({
   data: Dashboard;
   defaultResolution?: Resolution;
 }) {
+  const { i18n, t } = useLingui();
+
+  const dailyChartConfig = {
+    officialTotal: {
+      label: t`官方累计`,
+      color: 'var(--chart-5)',
+    },
+    localTotal: { label: t`本地累计`, color: 'var(--chart-2)' },
+  } satisfies ChartConfig;
+
+  const tenMinuteChartConfig = {
+    currentTotal: {
+      label: t`官方账单 + 预测`,
+      color: 'var(--chart-5)',
+    },
+    localTotal: {
+      label: t`本地数据 + 预测`,
+      color: 'var(--chart-2)',
+    },
+  } satisfies ChartConfig;
+
   const [resolution, setResolution] = useState<Resolution>(defaultResolution);
   const chartConfig: ChartConfig =
     resolution === 'ten-minute' ? tenMinuteChartConfig : dailyChartConfig;
@@ -93,13 +105,13 @@ export function BillingChart({
   }, [points, currentKey]);
   const axisMoney = useMemo(
     () =>
-      new Intl.NumberFormat('zh-CN', {
+      new Intl.NumberFormat(i18n.locale, {
         style: 'currency',
         currency: data.currency,
         minimumFractionDigits: costRange.decimals,
         maximumFractionDigits: costRange.decimals,
       }),
-    [data.currency, costRange.decimals],
+    [data.currency, costRange.decimals, i18n.locale],
   );
   const ticks = useMemo(() => {
     if (resolution === 'daily') return undefined;
@@ -126,18 +138,20 @@ export function BillingChart({
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <CardTitle>周期累计费用</CardTitle>
+            <CardTitle>
+              <Trans>周期累计费用</Trans>
+            </CardTitle>
             <Badge variant="outline">{data.currency}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <div role="group" aria-label="图表粒度" className="flex gap-1">
+            <div role="group" aria-label={t`图表粒度`} className="flex gap-1">
               <Button
                 size="sm"
                 variant={resolution === 'ten-minute' ? 'secondary' : 'ghost'}
                 aria-pressed={resolution === 'ten-minute'}
                 onClick={() => setResolution('ten-minute')}
               >
-                10 分钟
+                <Trans>10 分钟</Trans>
               </Button>
               <Button
                 size="sm"
@@ -145,7 +159,7 @@ export function BillingChart({
                 aria-pressed={resolution === 'daily'}
                 onClick={() => setResolution('daily')}
               >
-                每日
+                <Trans>每日</Trans>
               </Button>
             </div>
           </div>
@@ -206,8 +220,9 @@ export function BillingChart({
                           </div>
                           {resolution === 'ten-minute' && Number.isFinite(observed) && (
                             <div className="mt-1 font-normal text-muted-foreground">
-                              采集 {new Date(observed).toISOString().slice(11, 19)} UTC
-                              {point?.source === 'reconstructed' ? ' · 历史采集恢复' : ''}
+                              <Trans>采集</Trans>
+                              {new Date(observed).toISOString().slice(11, 19)} UTC
+                              {point?.source === 'reconstructed' ? t` · 历史采集恢复` : ''}
                             </div>
                           )}
                         </>
@@ -252,7 +267,7 @@ export function BillingChart({
           </ChartContainer>
         ) : (
           <div className="flex h-80 items-center justify-center text-sm text-muted-foreground">
-            {resolution === 'ten-minute' ? '暂无可用的 10 分钟费用数据' : '等待本周期账单数据'}
+            {resolution === 'ten-minute' ? t`暂无可用的 10 分钟费用数据` : t`等待本周期账单数据`}
           </div>
         )}
       </CardContent>

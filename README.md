@@ -76,16 +76,16 @@ The combined estimate uses the official historical bill, which limits the impact
 
 ## Features
 
-| Feature | Description |
-| --- | --- |
-| Current bill | View cycle costs, today's increase, official historical totals, and local cumulative estimates |
-| Cost trends | Switch between ten-minute collection curves and daily reconciliation curves to compare official adjustments with local estimates |
-| Service details | View usage, prices, free allowances, and costs by service and billing meter |
-| Resource usage | Compare usage curves for individual Workers, namespaces, applications, or buckets |
-| Daily reconciliation | Inspect daily cumulative costs and differences, with official revisions and calculation evidence retained |
-| Feishu notifications | Send a summary after each collection round, or a failure notification when today's usage collection fails |
-| Budget webhook | Send an event to a configured endpoint when the current cycle cost exceeds a custom threshold |
-| Local persistence | Preserve history, collection progress, and pending notifications across restarts |
+| Feature              | Description                                                                                                                      |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Current bill         | View cycle costs, today's increase, official historical totals, and local cumulative estimates                                   |
+| Cost trends          | Switch between ten-minute collection curves and daily reconciliation curves to compare official adjustments with local estimates |
+| Service details      | View usage, prices, free allowances, and costs by service and billing meter                                                      |
+| Resource usage       | Compare usage curves for individual Workers, namespaces, applications, or buckets                                                |
+| Daily reconciliation | Inspect daily cumulative costs and differences, with official revisions and calculation evidence retained                        |
+| Feishu notifications | Send a summary after each collection round, or a failure notification when today's usage collection fails                        |
+| Budget webhook       | Send an event to a configured endpoint when the current cycle cost exceeds a custom threshold                                    |
+| Local persistence    | Preserve history, collection progress, and pending notifications across restarts                                                 |
 
 Supported meters cover Workers (requests, CPU, Dynamic Workers), Workers Logs, Workers Builds, Containers, Durable Objects, R2, Queues, D1, and Workers KV.
 
@@ -124,11 +124,11 @@ CLOUDFLARE_ACCOUNT_ID=your_Account_ID
 
 Create a custom token under Cloudflare **My Profile → API Tokens**. Restrict account resources to the account you want to monitor and grant these permissions:
 
-| Permission | Purpose |
-| --- | --- |
-| `Account > Billing > Read` | Read bills, billing cycles, and subscriptions. See [billing permissions](https://developers.cloudflare.com/billing/understand/billing-permissions/). |
-| `Account > Account Analytics > Read` | Query usage statistics. See the [GraphQL API token guide](https://developers.cloudflare.com/analytics/graphql-api/getting-started/authentication/api-token-auth/). |
-| `Workers Observability Write` | Query Workers log counts. The [telemetry query API](https://developers.cloudflare.com/api/resources/workers/subresources/observability/subresources/telemetry/methods/query/) requires this permission even though this project only performs queries; a read-only permission cannot replace it. |
+| Permission                           | Purpose                                                                                                                                                                                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Account > Billing > Read`           | Read bills, billing cycles, and subscriptions. See [billing permissions](https://developers.cloudflare.com/billing/understand/billing-permissions/).                                                                                                                                             |
+| `Account > Account Analytics > Read` | Query usage statistics. See the [GraphQL API token guide](https://developers.cloudflare.com/analytics/graphql-api/getting-started/authentication/api-token-auth/).                                                                                                                               |
+| `Workers Observability Write`        | Query Workers log counts. The [telemetry query API](https://developers.cloudflare.com/api/resources/workers/subresources/observability/subresources/telemetry/methods/query/) requires this permission even though this project only performs queries; a read-only permission cannot replace it. |
 
 The token is used only on the backend and is never returned to the frontend. Do not commit `.env`.
 
@@ -175,23 +175,23 @@ The first startup collects current usage and backfills the current billing cycle
 
 ### 3. Configuration
 
-| Variable | Description |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Required Cloudflare API token |
-| `CLOUDFLARE_ACCOUNT_ID` | Required ID of the account to monitor |
-| `HOST` | Defaults to `127.0.0.1` locally; Compose sets `0.0.0.0` inside the container |
-| `PORT` | Defaults to `8788` locally; Compose uses `8788` |
-| `DATABASE_PATH` | Defaults to `./data/billing.sqlite` locally, relative to the project root; Compose uses a persistent volume |
-| `FEISHU_WEBHOOK_URL` | Optional Feishu group custom bot webhook; leave empty to disable Feishu notifications |
-| `FEISHU_SIGNING_SECRET` | Optional signing secret when signature verification is enabled; requires a webhook URL |
-| `BUDGET_WEBHOOK_URL` | Optional HTTP/HTTPS endpoint for budget-exceeded events |
+| Variable                 | Description                                                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`   | Required Cloudflare API token                                                                                    |
+| `CLOUDFLARE_ACCOUNT_ID`  | Required ID of the account to monitor                                                                            |
+| `HOST`                   | Defaults to `127.0.0.1` locally; Compose sets `0.0.0.0` inside the container                                     |
+| `PORT`                   | Defaults to `8788` locally; Compose uses `8788`                                                                  |
+| `DATABASE_PATH`          | Defaults to `./data/billing.sqlite` locally, relative to the project root; Compose uses a persistent volume      |
+| `FEISHU_WEBHOOK_URL`     | Optional Feishu group custom bot webhook; leave empty to disable Feishu notifications                            |
+| `FEISHU_SIGNING_SECRET`  | Optional signing secret when signature verification is enabled; requires a webhook URL                           |
+| `BUDGET_WEBHOOK_URL`     | Optional HTTP/HTTPS endpoint for budget-exceeded events                                                          |
 | `BUDGET_THRESHOLD_CENTS` | Optional positive integer threshold in cents; `30000` means USD 300. Configure together with the budget webhook. |
 
 The UI and API have no built-in authentication. Defaults are intended for local access. Configure authentication at the entry point if exposing the service externally.
 
 ### 4. Feishu notifications (optional)
 
-Add a custom bot to the target group and set its webhook in `FEISHU_WEBHOOK_URL`. If signature verification is enabled, also set `FEISHU_SIGNING_SECRET`. For keyword verification, you can use `Cloudflare`.
+Add a custom bot to the target group and configure its webhook on the Settings page (the gear icon in the header). If signature verification is enabled, also enter the signing secret. Environment variables `FEISHU_WEBHOOK_URL` and `FEISHU_SIGNING_SECRET` can still supply initial defaults. For keyword verification, you can use `Cloudflare`.
 
 Once enabled, every successful collection round sends a summary, normally once every ten minutes, **even if the amount has not changed**. Messages include collection time, billing cycle, official bill plus estimate, local cumulative estimate, today's increase, and the change since the previous report.
 
@@ -201,7 +201,7 @@ If today's usage collection fails, a notification includes the reason and the la
 
 ### 5. Budget webhook (optional)
 
-This feature is independent of Feishu. Set both values in `.env`:
+This feature is independent of Feishu. Enable it on the Settings page and enter the webhook and threshold in US cents. Alternatively, supply initial defaults in `.env`:
 
 ```dotenv
 BUDGET_WEBHOOK_URL=https://example.com/hooks/billing

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { NavLink, useNavigate } from 'react-router';
 import { BILLING_PATHS } from '@/constants/billing-navigation';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,8 @@ import type { Dashboard } from '@/types/billing';
 import { date, money } from '@/utils/format';
 
 export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number }) {
+  const { t } = useLingui();
+
   const navigate = useNavigate();
   const rows = [...data.history]
     .filter((item) => item.date < data.today)
@@ -22,10 +25,18 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>截至日期</TableHead>
-          <TableHead className="text-right">本地累计</TableHead>
-          <TableHead className="text-right">官方累计</TableHead>
-          <TableHead className="text-right">差值</TableHead>
+          <TableHead>
+            <Trans>截至日期</Trans>
+          </TableHead>
+          <TableHead className="text-right">
+            <Trans>本地累计</Trans>
+          </TableHead>
+          <TableHead className="text-right">
+            <Trans>官方累计</Trans>
+          </TableHead>
+          <TableHead className="text-right">
+            <Trans>差值</Trans>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -42,7 +53,7 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
               <NavLink
                 to={`${BILLING_PATHS.history}/${item.date}`}
                 className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={`查看 ${date(item.date)} 服务明细`}
+                aria-label={t`查看 ${{ value0: date(item.date) }} 服务明细`}
               >
                 {date(item.date)}
               </NavLink>
@@ -52,7 +63,9 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
             </TableCell>
             <TableCell className="text-right tabular-nums">
               {item.officialTotal === null ? (
-                <Badge variant="outline">待同步</Badge>
+                <Badge variant="outline">
+                  <Trans>待同步</Trans>
+                </Badge>
               ) : (
                 money(item.officialTotal, data.currency, true)
               )}
@@ -65,7 +78,7 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
         {rows.length === 0 && (
           <TableRow>
             <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-              暂无历史账单
+              <Trans>暂无历史账单</Trans>
             </TableCell>
           </TableRow>
         )}

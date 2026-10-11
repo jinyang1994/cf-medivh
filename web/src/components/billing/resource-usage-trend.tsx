@@ -1,3 +1,5 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, type DotItemDotProps } from 'recharts';
 import { Button } from '@/components/ui/button';
@@ -41,9 +43,13 @@ function ResourceUsagePlot({
   data: ResourceUsageTrend | ResourceCostTrend;
   active?: boolean;
 }) {
+  const { i18n, t } = useLingui();
+
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const cost = 'currency' in data;
-  const { series, points } = useMemo(() => resourceTrendSeries(data), [data]);
+  // resourceTrendSeries translates synthetic series names using the active locale.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { series, points } = useMemo(() => resourceTrendSeries(data), [data, i18n.locale]);
   if (!active) return null;
 
   const resources = series.map((item) => ({
@@ -63,7 +69,7 @@ function ResourceUsagePlot({
       ? money(value, data.currency, 'rate')
       : value == null
         ? '—'
-        : `${formatUsage(value)} ${data.unit}`;
+        : `${formatUsage(value)} ${displayText(data.unit)}`;
   const plottedPoints = points.map((point) => ({
     timestamp: point.timestamp,
     time: point.time,
@@ -198,11 +204,18 @@ function ResourceUsagePlot({
       ) : (
         <p className="flex h-80 items-center justify-center text-center text-sm text-muted-foreground sm:h-96">
           {selected.length === 0
-            ? `点击下方图例显示${cost ? '费用' : '用量'}曲线。`
-            : `所选曲线在此时段暂无可用${cost ? '费用' : '用量'}。`}
+            ? t`点击下方图例显示${{
+                value0: cost ? t`费用` : t`用量`,
+              }}曲线。`
+            : t`所选曲线在此时段暂无可用${{
+                value0: cost ? t`费用` : t`用量`,
+              }}。`}
         </p>
       )}
-      <ul aria-label="曲线图例" className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+      <ul
+        aria-label={t`曲线图例`}
+        className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs"
+      >
         {resources.map((item) => {
           const visible = !hiddenIds.includes(item.toggleKey);
           return (
@@ -211,7 +224,7 @@ function ResourceUsagePlot({
                 type="button"
                 aria-label={item.resourceId ? `${item.name}（${item.resourceId}）` : item.name}
                 aria-pressed={visible}
-                title={`${item.name}${item.resourceId ? ` · ${item.resourceId}` : ''} · ${cost ? (item.kind === 'resource' ? '分摊估算 · 最近累计' : '最近累计') : '区间合计'} ${formattedValue(item.total)}`}
+                title={`${item.name}${item.resourceId ? ` · ${item.resourceId}` : ''} · ${cost ? (item.kind === 'resource' ? t`分摊估算 · 最近累计` : t`最近累计`) : t`区间合计`} ${formattedValue(item.total)}`}
                 onClick={() =>
                   setHiddenIds((previous) =>
                     previous.includes(item.toggleKey)
@@ -253,6 +266,8 @@ export function ResourceUsageTrendContent({
   metric?: 'quantity' | 'cost';
   active?: boolean;
 }) {
+  const { t } = useLingui();
+
   const cost = data ? 'currency' in data : metric === 'cost';
   return (
     <div className="space-y-4">
@@ -261,26 +276,39 @@ export function ResourceUsageTrendContent({
           role="alert"
           className="rounded-md border border-destructive/30 px-4 py-3 text-sm text-destructive"
         >
-          {data ? `刷新失败，显示上次数据：${error}` : error}
+          {data ? t`刷新失败，显示上次数据：${{ value0: displayText(error) }}` : displayText(error)}
           <Button size="sm" variant="outline" onClick={refresh} className="ml-3">
-            重试
+            <Trans>重试</Trans>
           </Button>
         </div>
       )}
       {loading && !data && (
-        <div role="status" aria-label={`正在加载资源${cost ? '费用' : '用量'}`}>
+        <div
+          role="status"
+          aria-label={t`正在加载资源${{
+            value0: cost ? t`费用` : t`用量`,
+          }}`}
+        >
           <Skeleton className="h-80 w-full" />
           <p className="mt-3 text-sm text-muted-foreground">
-            正在读取已采集的资源{cost ? '费用' : '用量'}…
+            <Trans>
+              正在读取已采集的资源
+              {{
+                metric: cost ? t`费用` : t`用量`,
+              }}
+              …
+            </Trans>
           </p>
         </div>
       )}
       {data?.unavailableReason ? (
         <p className="rounded-md bg-muted/50 px-4 py-6 text-sm leading-relaxed text-muted-foreground">
-          {data.unavailableReason}
+          {displayText(data.unavailableReason)}
         </p>
       ) : data && !('currency' in data) && data.resources.length === 0 && data.total == null ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">此时段暂无资源用量记录。</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          <Trans>此时段暂无资源用量记录。</Trans>
+        </p>
       ) : data ? (
         <ResourceUsagePlot
           key={`${resolution}-${cost ? 'cost' : 'quantity'}`}
@@ -290,11 +318,13 @@ export function ResourceUsageTrendContent({
       ) : null}
       {data && data.warnings.length > 0 && (
         <div className="rounded-md bg-muted/50 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-          <p className="font-medium">数据说明</p>
+          <p className="font-medium">
+            <Trans>数据说明</Trans>
+          </p>
           <ul className="mt-1 list-disc space-y-1 pl-4">
             {data.warnings.map((warning) => (
-              <li key={warning} className="break-words">
-                {warning}
+              <li key={displayText(warning)} className="break-words">
+                {displayText(warning)}
               </li>
             ))}
           </ul>

@@ -1,3 +1,5 @@
+import { notificationConfig } from '@/services/runtime-settings';
+import { notificationLanguage } from '@/services/notification-settings';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { loadConfig } from '@/config';
@@ -15,7 +17,10 @@ const collector = new Collector(
   store,
   createCloudflareProvider({ accountId, token }),
   undefined,
-  createNotificationExtensions(config),
+  () =>
+    createNotificationExtensions(notificationConfig(store, config), () =>
+      notificationLanguage(store),
+    ),
 );
 try {
   const collected = await collector.tick(true);

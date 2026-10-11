@@ -1,3 +1,7 @@
+import { i18n } from '@lingui/core';
+import { messages } from '../src/locales/zh-CN/messages.ts';
+i18n.load('zh-CN', messages);
+i18n.activate('zh-CN');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { ResourceCostTrend, ResourceUsageTrend } from '../src/types/billing.ts';

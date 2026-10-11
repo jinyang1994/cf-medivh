@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import type { ResourceCostTrend, ResourceUsageTrend } from '../types/billing';
 
 export interface ResourceTrendSeries {
@@ -32,7 +33,7 @@ export function resourceTrendSeries(data: ResourceUsageTrend | ResourceCostTrend
     {
       key: 'total',
       toggleKey: JSON.stringify(['total']),
-      name: '汇总',
+      name: t`汇总`,
       total: cost ? latestValue(data.points.map((point) => point.total)) : (data.total ?? null),
       kind: 'total',
     },
@@ -43,7 +44,7 @@ export function resourceTrendSeries(data: ResourceUsageTrend | ResourceCostTrend
     series.push({
       key: 'unattributed',
       toggleKey: JSON.stringify(['unattributed']),
-      name: '未归属费用',
+      name: t`未归属费用`,
       total: latestValue(data.points.map((point) => point.unattributedCost)),
       kind: 'unattributed',
     });
@@ -56,7 +57,7 @@ export function resourceTrendSeries(data: ResourceUsageTrend | ResourceCostTrend
     series.push({
       key: 'official',
       toggleKey: JSON.stringify(['official']),
-      name: '官方汇总',
+      name: t`官方汇总`,
       total: latestValue(data.points.map((point) => point.officialCost)),
       kind: 'official',
     });

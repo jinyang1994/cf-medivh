@@ -1,0 +1,1014 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-11 14:32+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/components/billing/billing-chart.tsx
+msgid " · 历史采集恢复"
+msgstr " · Restored historical samples"
+
+#: src/pages/billing/services-page.tsx
+msgid " · 点击计费项查看趋势"
+msgstr " · Select a meter to view trends"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "· 服务明细"
+msgstr "· Service details"
+
+#: src/pages/billing/history-page.tsx
+msgid "{count} 天待同步"
+msgstr "{count, plural, one {# day pending sync} other {# days pending sync}}"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "{count} 条"
+msgstr "{count, plural, one {# item} other {# items}}"
+
+#: src/utils/display-text.ts
+msgid "{date} 资源用量未取得：{reason}"
+msgstr "Resource usage unavailable for {date}: {reason}"
+
+#: src/utils/display-text.ts
+msgid "{name}尚无资源用量记录，相应费用保留为未归属。"
+msgstr "No resource usage is recorded for {name}; its costs remain unattributed."
+
+#: src/utils/display-text.ts
+msgid "{name}资源用量按{interval}采集，仅使用费用观察时已结束的时段。"
+msgstr "Resource usage for {name} is collected {interval}; only periods completed at the cost observation time are used."
+
+#: src/pages/billing/overview-page.tsx
+msgid "{value0} · 本地估算"
+msgstr "{value0} · Local estimate"
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "{value0}时间范围"
+msgstr "{value0} time range"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "/ 账期"
+msgstr "/ billing cycle"
+
+#: src/components/billing/billing-chart.tsx
+msgid "10 分钟"
+msgstr "10 minutes"
+
+#: src/pages/settings/settings-page.tsx
+msgid "30000 表示 300 美元，严格超过阈值时每账期通知一次。"
+msgstr "30000 means USD 300. Sends once per cycle when the amount strictly exceeds the threshold."
+
+#: src/utils/display-text.ts
+msgid "A 类操作"
+msgstr "Class A operations"
+
+#: src/utils/display-text.ts
+msgid "B 类操作"
+msgstr "Class B operations"
+
+#: src/utils/display-text.ts
+msgid "Cloudflare 此项资源明细仅保留最近 {days} 天，图表从 {date} 起展示可查询的数据。"
+msgstr "Cloudflare retains these resource details for {days} days; the chart shows available data from {date}."
+
+#: src/utils/display-text.ts
+msgid "Cloudflare 的构建用量统计没有提供按 Worker 拆分的维度，暂时只能查看服务汇总。"
+msgstr "Cloudflare build usage has no per-Worker breakdown; only service totals are available."
+
+#: src/utils/display-text.ts
+msgid "Cloudflare 的此项用量统计没有提供具体资源维度，暂时只能查看服务汇总。"
+msgstr "Cloudflare provides no resource breakdown for this meter; only service totals are available."
+
+#: src/utils/display-text.ts
+msgid "CPU 时间"
+msgstr "CPU time"
+
+#: src/utils/display-text.ts
+msgid "KV 写入单位"
+msgstr "KV write units"
+
+#: src/utils/display-text.ts
+msgid "KV 删除请求"
+msgstr "KV delete requests"
+
+#: src/utils/display-text.ts
+msgid "KV 存储"
+msgstr "KV storage"
+
+#: src/utils/display-text.ts
+msgid "KV 读取单位"
+msgstr "KV read units"
+
+#: src/utils/display-text.ts
+msgid "R2 存储按每天峰值折算 GB-months，资源图按日展示。"
+msgstr "R2 storage uses daily peaks converted to GB-months; the resource chart shows daily data."
+
+#: src/utils/display-text.ts
+msgid "SQL 写入行数"
+msgstr "SQL rows written"
+
+#: src/utils/display-text.ts
+msgid "SQL 存储"
+msgstr "SQL storage"
+
+#: src/utils/display-text.ts
+msgid "SQL 读取行数"
+msgstr "SQL rows read"
+
+#: src/layouts/billing-layout.tsx
+msgid "X 主页"
+msgstr "X profile"
+
+#: src/layouts/billing-layout.tsx
+msgid "下次采集"
+msgstr "Next collection"
+
+#: src/pages/billing/overview-page.tsx
+msgid "今日"
+msgstr "Today"
+
+#: src/pages/billing/overview-page.tsx
+msgid "今日实时费用"
+msgstr "Today’s live cost"
+
+#: src/pages/billing/services-page.tsx
+msgid "今日用量"
+msgstr "Today’s usage"
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "以下显示已采集的周期累计用量。"
+msgstr "Collected cumulative usage for this billing cycle."
+
+#: src/utils/display-text.ts
+msgid "低频存储"
+msgstr "Infrequent Access storage"
+
+#: src/utils/display-text.ts
+msgid "低频存储 A 类操作"
+msgstr "Infrequent Access Class A operations"
+
+#: src/utils/display-text.ts
+msgid "低频存储 B 类操作"
+msgstr "Infrequent Access Class B operations"
+
+#: src/utils/display-text.ts
+msgid "低频存储数据检索"
+msgstr "Infrequent Access data retrieval"
+
+#: src/pages/settings/settings-page.tsx
+msgid "保存中…"
+msgstr "Saving…"
+
+#: src/pages/settings/settings-page.tsx
+msgid "保存后覆盖环境变量中的通知配置，无需重启。停用后暂停发送，待发送通知会保留。"
+msgstr "Saving overrides notification environment settings without a restart. Disabling pauses delivery and keeps pending notifications."
+
+#: src/pages/settings/settings-page.tsx
+msgid "保存设置"
+msgstr "Save settings"
+
+#: src/pages/billing/services-page.tsx
+msgid "免费额度"
+msgstr "Free allowance"
+
+#: src/pages/billing/overview-page.tsx
+msgid "全部明细"
+msgstr "All details"
+
+#: src/pages/billing/service-trend-page.tsx
+msgid "全部计费项"
+msgstr "All meters"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "关闭通知"
+msgstr "Close notifications"
+
+#: src/utils/display-text.ts
+msgid "其他地区出站流量"
+msgstr "Egress to other regions"
+
+#: src/utils/display-text.ts
+msgid "内存"
+msgstr "Memory"
+
+#: src/utils/display-text.ts
+msgid "最近一次资源采集未完成，保留已保存的用量：{reason}"
+msgstr "The latest resource collection is incomplete; showing saved usage: {reason}"
+
+#: src/utils/display-text.ts
+msgid "最近时段的费用尚不可用，资源合计保留最后一次可用的累计估算。"
+msgstr "Recent costs are unavailable. Resource totals retain the latest available cumulative estimate."
+
+#: src/pages/billing/overview-page.tsx
+msgid "最近核对"
+msgstr "Recent reconciliation"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "最近累计"
+msgstr "Latest total"
+
+#: src/utils/display-text.ts
+msgid "写入"
+msgstr "Writes"
+
+#: src/utils/display-text.ts
+msgid "写入行数"
+msgstr "Rows written"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "分摊估算 · 最近累计"
+msgstr "Allocated estimate · Latest total"
+
+#: src/utils/display-text.ts
+msgid "列举"
+msgstr "Lists"
+
+#: src/utils/display-text.ts
+msgid "删除"
+msgstr "Deletes"
+
+#: src/components/billing/resource-usage-trend.tsx
+#: src/components/billing/service-trend-panel.tsx
+msgid "刷新失败，显示上次数据：{value0}"
+msgstr "Refresh failed; showing previous data: {value0}"
+
+#: src/pages/billing/daily-meter-trend-page.tsx
+#: src/pages/billing/daily-services-page.tsx
+msgid "前一天"
+msgstr "Previous day"
+
+#: src/pages/billing/daily-services-page.tsx
+#: src/pages/settings/settings-page.tsx
+msgid "加载中…"
+msgstr "Loading…"
+
+#: src/utils/display-text.ts
+msgid "加载失败"
+msgstr "Failed to load"
+
+#: src/utils/display-text.ts
+msgid "北美及欧洲出站流量"
+msgstr "Egress to North America and Europe"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "区间合计"
+msgstr "Period total"
+
+#: src/pages/billing/daily-services-page.tsx
+#: src/pages/billing/services-page.tsx
+msgid "单价"
+msgstr "Unit price"
+
+#: src/pages/billing/overview-page.tsx
+msgid "历史官方累计"
+msgstr "Latest official total"
+
+#: src/pages/settings/settings-page.tsx
+msgid "可选"
+msgstr "Optional"
+
+#: src/pages/billing/daily-meter-trend-page.tsx
+#: src/pages/billing/daily-services-page.tsx
+msgid "后一天"
+msgstr "Next day"
+
+#: src/utils/display-text.ts
+msgid "启动前超过 7 天的 Workers Logs 已超出保留期；历史日志量不完整，费用仅从可用记录估算"
+msgstr "Workers Logs older than 7 days before startup are beyond retention; historical usage is incomplete and costs are estimated from available records."
+
+#: src/pages/settings/settings-page.tsx
+msgid "启用预算通知"
+msgstr "Enable budget notifications"
+
+#: src/pages/settings/settings-page.tsx
+msgid "启用飞书通知"
+msgstr "Enable Feishu notifications"
+
+#: src/pages/billing/services-page.tsx
+#: src/utils/display-text.ts
+msgid "周期"
+msgstr "cycle"
+
+#: src/pages/billing/services-page.tsx
+msgid "周期用量"
+msgstr "Cycle usage"
+
+#: src/pages/billing/overview-page.tsx
+msgid "周期累计"
+msgstr "Cycle total"
+
+#: src/components/billing/billing-chart.tsx
+msgid "周期累计费用"
+msgstr "Billing cycle cost"
+
+#: src/pages/billing/overview-page.tsx
+msgid "周期费用"
+msgstr "Cycle cost"
+
+#: src/pages/billing/services-page.tsx
+msgid "固定"
+msgstr "Fixed"
+
+#: src/utils/display-text.ts
+msgid "固定订阅费"
+msgstr "Subscription fee"
+
+#: src/utils/display-text.ts
+msgid "固定订阅费没有分时用量。"
+msgstr "Fixed subscription fees have no time-based usage."
+
+#: src/utils/display-text.ts
+msgid "固定订阅费用没有具体资源用量。"
+msgstr "Fixed subscription fees have no resource usage."
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "固定费"
+msgstr "Fixed fee"
+
+#: src/components/billing/billing-chart.tsx
+msgid "图表粒度"
+msgstr "Chart interval"
+
+#: src/pages/settings/settings-page.tsx
+msgid "基础"
+msgstr "General"
+
+#: src/utils/display-text.ts
+msgid "大洋洲、韩国及台湾出站流量"
+msgstr "Egress to Oceania, Korea and Taiwan"
+
+#: src/utils/display-text.ts
+msgid "存储"
+msgstr "Storage"
+
+#: src/utils/display-text.ts
+msgid "存储用量按小时折算 GB-months，资源图按小时展示。"
+msgstr "Storage usage is converted hourly to GB-months; the resource chart shows hourly data."
+
+#: src/pages/billing/history-page.tsx
+msgid "官方已同步"
+msgstr "Official data synced"
+
+#: src/utils/resource-trend-series.ts
+msgid "官方汇总"
+msgstr "Official total"
+
+#: src/components/billing/billing-chart.tsx
+#: src/components/billing/history-table.tsx
+msgid "官方累计"
+msgstr "Official total"
+
+#: src/components/billing/service-trend-chart.tsx
+msgid "官方累计费用"
+msgstr "Official cumulative cost"
+
+#: src/components/billing/billing-chart.tsx
+msgid "官方账单 + 预测"
+msgstr "Official bill + forecast"
+
+#: src/utils/display-text.ts
+msgid "小时"
+msgstr "hourly"
+
+#: src/utils/display-text.ts
+msgid "尚无可用的本地费用记录，请等待后台采集完成。"
+msgstr "No local cost records available. Please wait for background collection."
+
+#: src/pages/settings/settings-page.tsx
+msgid "尚未配置"
+msgstr "Not configured"
+
+#: src/layouts/billing-layout.tsx
+msgid "尚未采集用量"
+msgstr "No usage collected yet"
+
+#: src/components/billing/history-table.tsx
+msgid "差值"
+msgstr "Difference"
+
+#: src/components/billing/notification-language.tsx
+#~ msgid "已保存，下次发送时生效。"
+#~ msgstr "Saved. Applies to the next notification."
+
+#: src/pages/settings/settings-page.tsx
+msgid "已配置，留空保留"
+msgstr "Configured; leave blank to keep"
+
+#: src/utils/display-text.ts
+msgid "当前账单"
+msgstr "Current bill"
+
+#: src/utils/display-text.ts
+msgid "当前账单周期尚未更新"
+msgstr "The current billing cycle has not been updated yet"
+
+#: src/pages/billing/service-trend-page.tsx
+msgid "当前账期没有这个服务或计费项，请从服务明细重新选择。"
+msgstr "This service or meter is not in the current cycle. Choose another from service details."
+
+#: src/pages/billing/overview-page.tsx
+msgid "当前账期第 {value0} 天，共 {value1} 天"
+msgstr "Day {value0} of {value1} in this billing cycle"
+
+#: src/pages/billing/services-page.tsx
+msgid "当前费用"
+msgstr "Current cost"
+
+#: src/utils/display-text.ts
+msgid "当日服务明细加载失败"
+msgstr "Failed to load daily service details"
+
+#: src/pages/billing/daily-meter-trend-page.tsx
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日用量"
+msgstr "Daily usage"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日用量待采集"
+msgstr "Daily usage has not been collected yet"
+
+#: src/pages/billing/daily-meter-trend-page.tsx
+msgid "当日累计费用"
+msgstr "Daily cumulative cost"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日费用"
+msgstr "Daily cost"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日超额用量"
+msgstr "Daily overage"
+
+#: src/utils/display-text.ts
+msgid "当日趋势加载失败"
+msgstr "Failed to load daily trends"
+
+#: src/components/billing/history-table.tsx
+msgid "待同步"
+msgstr "Pending sync"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "待补全"
+msgstr "Incomplete"
+
+#: src/pages/billing/overview-page.tsx
+#: src/pages/billing/services-page.tsx
+msgid "截至 {value0}"
+msgstr "As of {value0}"
+
+#: src/pages/billing/overview-page.tsx
+msgid "截至 {value0} · {value1}"
+msgstr "As of {value0} · {value1}"
+
+#: src/components/billing/history-table.tsx
+msgid "截至日期"
+msgstr "Date"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "所选曲线在此时段暂无可用{value0}。"
+msgstr "No {value0} data available for the selected series in this period."
+
+#: src/utils/display-text.ts
+msgid "所选账期已超出 Cloudflare 资源明细的可查询范围。"
+msgstr "The selected billing cycle is outside Cloudflare’s resource detail query range."
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "按日免费"
+msgstr "Daily allowance"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "按月免费"
+msgstr "Monthly allowance"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "数据同步失败"
+msgstr "Data sync failed"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "数据提示"
+msgstr "Data notice"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "数据说明"
+msgstr "Data notes"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "无免费额度"
+msgstr "No free allowance"
+
+#: src/layouts/billing-layout.tsx
+msgid "无法加载账单"
+msgstr "Unable to load billing data"
+
+#: src/utils/display-text.ts
+msgid "无法读取资源用量：{reason}"
+msgstr "Unable to read resource usage: {reason}"
+
+#: src/pages/billing/services-page.tsx
+#: src/utils/display-text.ts
+msgid "日"
+msgstr "day"
+
+#: src/utils/display-text.ts
+msgid "日志事件"
+msgstr "Log events"
+
+#: src/pages/settings/settings-page.tsx
+msgid "显示脱敏密钥"
+msgstr "Show masked secret"
+
+#: src/components/billing/history-table.tsx
+msgid "暂无历史账单"
+msgstr "No billing history"
+
+#: src/components/billing/billing-chart.tsx
+msgid "暂无可用的 10 分钟费用数据"
+msgstr "No 10-minute cost data available"
+
+#: src/components/billing/service-trend-chart.tsx
+msgid "暂无可用的每日趋势，等待用量采集或补全。"
+msgstr "No daily trend available yet. Waiting for usage collection or backfill."
+
+#: src/components/billing/service-trend-chart.tsx
+msgid "暂无完整的 10 分钟采集记录，可切换到每日查看历史数据。"
+msgstr "No complete 10-minute samples. Switch to daily to view historical data."
+
+#: src/pages/billing/overview-page.tsx
+#: src/pages/billing/services-page.tsx
+msgid "暂无服务用量"
+msgstr "No service usage"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "暂无通知"
+msgstr "No notifications"
+
+#: src/utils/display-text.ts
+msgid "暂时未能取得资源用量。"
+msgstr "Resource usage is temporarily unavailable."
+
+#: src/components/billing/resource-usage-trend.tsx
+#: src/components/billing/service-trend-chart.tsx
+msgid "曲线图例"
+msgstr "Chart legend"
+
+#: src/pages/billing/overview-page.tsx
+msgid "服务"
+msgstr "Service"
+
+#: src/pages/billing/daily-services-page.tsx
+#: src/pages/billing/services-page.tsx
+msgid "服务 / 计费项"
+msgstr "Service / Meter"
+
+#: src/pages/billing/services-page.tsx
+#: src/utils/display-text.ts
+msgid "服务明细"
+msgstr "Service details"
+
+#: src/utils/display-text.ts
+msgid "服务汇总有缺失或未完成时段，合计仅包含已有计费项记录。"
+msgstr "Service totals have missing or unfinished periods; totals include only available meter records."
+
+#: src/pages/billing/overview-page.tsx
+#: src/pages/billing/service-trend-page.tsx
+msgid "服务费用"
+msgstr "Service costs"
+
+#: src/pages/billing/service-trend-page.tsx
+msgid "服务趋势"
+msgstr "Service trends"
+
+#: src/utils/resource-trend-series.ts
+msgid "未归属费用"
+msgstr "Unattributed cost"
+
+#: src/utils/display-text.ts
+msgid "未能取得所选时间范围的资源用量，请查看下方数据说明或稍后重试。"
+msgstr "Resource usage is unavailable for this period. See the notes below or retry later."
+
+#: src/pages/billing/overview-page.tsx
+msgid "本地 − 官方"
+msgstr "Local − Official"
+
+#: src/pages/billing/overview-page.tsx
+#: src/pages/billing/services-page.tsx
+msgid "本地估算"
+msgstr "Local estimate"
+
+#: src/components/billing/billing-chart.tsx
+msgid "本地数据 + 预测"
+msgstr "Local data + forecast"
+
+#: src/components/billing/billing-chart.tsx
+#: src/components/billing/history-table.tsx
+#: src/pages/billing/services-page.tsx
+msgid "本地累计"
+msgstr "Local total"
+
+#: src/components/billing/service-trend-chart.tsx
+#: src/pages/billing/overview-page.tsx
+msgid "本地累计费用"
+msgstr "Local cumulative cost"
+
+#: src/pages/billing/overview-page.tsx
+msgid "本地预估"
+msgstr "Local estimate"
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "本账期 · 每日"
+msgstr "This cycle · Daily"
+
+#: src/utils/display-text.ts
+msgid "构建时间"
+msgstr "Build duration"
+
+#: src/pages/billing/services-page.tsx
+msgid "查看 {value0} · {value1} 趋势"
+msgstr "View trends for {value0} · {value1}"
+
+#: src/components/billing/history-table.tsx
+msgid "查看 {value0} 服务明细"
+msgstr "View service details for {value0}"
+
+#: src/pages/billing/overview-page.tsx
+msgid "查看 {value0} 费用趋势"
+msgstr "View cost trends for {value0}"
+
+#: src/utils/display-text.ts
+msgid "标准存储"
+msgstr "Standard storage"
+
+#: src/utils/display-text.ts
+msgid "标准操作"
+msgstr "Standard operations"
+
+#: src/pages/billing/services-page.tsx
+msgid "标注估算的金额按已有用量计算；用量不全可能低估，服务合计可能与官方校正总额不同。"
+msgstr "Estimates use available usage; incomplete data may underestimate costs, and service totals may differ from adjusted official totals."
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "正在加载服务趋势"
+msgstr "Loading service trends"
+
+#: src/components/billing/billing-loading.tsx
+msgid "正在加载账单"
+msgstr "Loading billing data"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "正在加载资源{value0}"
+msgstr "Loading resource {value0}"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "正在读取已采集的资源{metric}…"
+msgstr "Reading collected resource {metric}…"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "此时段暂无资源用量记录。"
+msgstr "No resource usage recorded in this period."
+
+#: src/layouts/billing-layout.tsx
+msgid "每 10 分钟采集"
+msgstr "Collected every 10 minutes"
+
+#: src/components/billing/billing-chart.tsx
+msgid "每日"
+msgstr "Daily"
+
+#: src/pages/billing/overview-page.tsx
+msgid "每日明细"
+msgstr "Daily details"
+
+#: src/pages/billing/history-page.tsx
+#: src/utils/display-text.ts
+msgid "每日核对"
+msgstr "Daily reconciliation"
+
+#: src/utils/resource-trend-series.ts
+msgid "汇总"
+msgstr "Total"
+
+#: src/pages/settings/settings-page.tsx
+#~ msgid "清除已保存的签名密钥"
+#~ msgstr "Clear the saved signing secret"
+
+#: src/components/billing/resource-usage-trend.tsx
+msgid "点击下方图例显示{value0}曲线。"
+msgstr "Select a legend below to show the {value0} chart."
+
+#: src/components/billing/service-trend-chart.tsx
+msgid "点击下方图例显示曲线。"
+msgstr "Select a legend below to show a series."
+
+#: src/components/billing/notification-language.tsx
+#~ msgid "独立于页面语言，对所有设备生效。"
+#~ msgstr "Independent of the interface language; applies to all devices."
+
+#: src/components/billing/resource-usage-trend.tsx
+#: src/components/billing/service-trend-panel.tsx
+msgid "用量"
+msgstr "Usage"
+
+#: src/pages/billing/services-page.tsx
+msgid "用量估算"
+msgstr "Usage estimate"
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "用量图表"
+msgstr "Usage chart"
+
+#: src/pages/billing/overview-page.tsx
+msgid "用量待补全"
+msgstr "Usage incomplete"
+
+#: src/layouts/billing-layout.tsx
+msgid "用量截至 {value0} UTC"
+msgstr "Usage as of {value0} UTC"
+
+#: src/utils/display-text.ts
+msgid "磁盘"
+msgstr "Disk"
+
+#: src/pages/billing/overview-page.tsx
+msgid "等待官方汇总"
+msgstr "Waiting for official totals"
+
+#: src/components/billing/billing-chart.tsx
+msgid "等待本周期账单数据"
+msgstr "Waiting for this billing cycle’s data"
+
+#: src/pages/billing/overview-page.tsx
+msgid "等待账期信息"
+msgstr "Waiting for billing cycle information"
+
+#: src/pages/settings/settings-page.tsx
+msgid "签名密钥"
+msgstr "Signing secret"
+
+#: src/components/billing/service-trend-chart.tsx
+msgid "累计用量"
+msgstr "Cumulative usage"
+
+#: src/utils/display-text.ts
+msgid "计算时长"
+msgstr "Compute duration"
+
+#: src/utils/display-text.ts
+msgid "计算请求"
+msgstr "Compute requests"
+
+#: src/pages/billing/service-trend-page.tsx
+msgid "计费项"
+msgstr "Meter"
+
+#: src/pages/billing/daily-meter-trend-page.tsx
+msgid "计费项趋势"
+msgstr "Meter trend"
+
+#: src/utils/display-text.ts
+msgid "订阅"
+msgstr "Subscription"
+
+#: src/layouts/billing-layout.tsx
+#: src/pages/settings/settings-page.tsx
+msgid "设置"
+msgstr "Settings"
+
+#: src/components/billing/language-select.tsx
+#: src/pages/settings/settings-page.tsx
+msgid "设置加载或保存失败"
+msgstr "Could not load or save settings"
+
+#: src/pages/settings/settings-page.tsx
+msgid "设置已保存"
+msgstr "Settings saved"
+
+#: src/layouts/billing-layout.tsx
+msgid "访问我的 X 主页"
+msgstr "Visit my X profile"
+
+#: src/utils/display-text.ts
+msgid "该日期不在当前账期内或尚未到来"
+msgstr "This date is outside the current billing cycle or is in the future"
+
+#: src/components/billing/language-select.tsx
+#: src/pages/settings/settings-page.tsx
+#: src/utils/display-text.ts
+msgid "语言"
+msgstr "Language"
+
+#: src/pages/billing/service-trend-page.tsx
+msgid "请从服务明细选择要查看的服务。"
+msgstr "Choose a service from service details."
+
+#: src/pages/settings/settings-page.tsx
+msgid "请填写有效的预算 Webhook 地址。"
+msgstr "Enter a valid budget webhook URL."
+
+#: src/pages/settings/settings-page.tsx
+msgid "请填写有效的飞书机器人 Webhook 地址。"
+msgstr "Enter a valid Feishu bot webhook URL."
+
+#: src/utils/display-text.ts
+msgid "请求"
+msgstr "Requests"
+
+#: src/utils/display-text.ts
+msgid "读取"
+msgstr "Reads"
+
+#: src/utils/display-text.ts
+msgid "读取行数"
+msgstr "Rows read"
+
+#: src/utils/display-text.ts
+msgid "账单加载失败"
+msgstr "Failed to load billing data"
+
+#: src/utils/display-text.ts
+msgid "账单响应格式错误"
+msgstr "Invalid billing response"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "账单数据同步和用量提示，打开即标记为已读。"
+msgstr "Billing sync and usage updates. Opening marks them as read."
+
+#: src/layouts/billing-layout.tsx
+msgid "账单暂不可用"
+msgstr "Billing data is temporarily unavailable"
+
+#: src/utils/display-text.ts
+msgid "账单请求超时，请重试"
+msgstr "Billing request timed out. Please retry."
+
+#: src/layouts/billing-layout.tsx
+msgid "账单页面"
+msgstr "Billing navigation"
+
+#: src/pages/billing/overview-page.tsx
+msgid "账期天数"
+msgstr "Billing cycle days"
+
+#: src/utils/display-text.ts
+msgid "账期已变化，请刷新页面"
+msgstr "The billing cycle has changed. Please reload the page."
+
+#: src/components/billing/resource-usage-trend.tsx
+#: src/components/billing/service-trend-panel.tsx
+msgid "费用"
+msgstr "Cost"
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "费用图表"
+msgstr "Cost chart"
+
+#: src/utils/display-text.ts
+msgid "资源明细仅有小时采样；10 分钟汇总使用已保存的采集快照。"
+msgstr "Resource details are sampled hourly; 10-minute totals use stored collection snapshots."
+
+#: src/utils/display-text.ts
+msgid "资源用量加载失败"
+msgstr "Failed to load resource usage"
+
+#: src/utils/display-text.ts
+msgid "资源用量响应格式错误"
+msgstr "Invalid resource usage response"
+
+#: src/utils/display-text.ts
+msgid "资源用量尚未采集，请等待后台采集完成。"
+msgstr "Resource usage has not been collected yet. Please wait for background collection."
+
+#: src/utils/display-text.ts
+msgid "资源用量请求超时，请重试"
+msgstr "Resource usage request timed out. Please retry."
+
+#: src/utils/display-text.ts
+msgid "资源用量采集失败，将在下一轮自动重试。"
+msgstr "Resource usage collection failed; it will retry automatically next time."
+
+#: src/utils/display-text.ts
+msgid "资源费用加载失败"
+msgstr "Failed to load resource costs"
+
+#: src/utils/display-text.ts
+msgid "资源费用响应格式错误"
+msgstr "Invalid resource cost response"
+
+#: src/utils/display-text.ts
+msgid "资源费用请求超时，请重试"
+msgstr "Resource cost request timed out. Please retry."
+
+#: src/utils/display-text.ts
+msgid "趋势加载失败"
+msgstr "Failed to load trends"
+
+#: src/utils/display-text.ts
+msgid "趋势响应格式错误"
+msgstr "Invalid trend response"
+
+#: src/utils/display-text.ts
+msgid "趋势请求超时，请重试"
+msgstr "Trend request timed out. Please retry."
+
+#: src/components/billing/service-trend-panel.tsx
+msgid "近 48 小时"
+msgstr "Last 48 hours"
+
+#: src/pages/billing/daily-meter-trend-page.tsx
+msgid "返回 {value0} 服务明细"
+msgstr "Back to service details for {value0}"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "通知"
+msgstr "Notifications"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "通知，{value0} 条未读"
+msgstr "Notifications, {value0} unread"
+
+#: src/components/billing/billing-notifications.tsx
+msgid "通知列表"
+msgstr "Notification list"
+
+#: src/utils/display-text.ts
+msgid "部分历史用量来自官方账单回填，该部分差值不代表独立核验"
+msgstr "Some historical usage was backfilled from official bills; those differences are not an independent reconciliation."
+
+#: src/utils/display-text.ts
+msgid "部分时段尚未采集或采集失败，图中保留断线；合计仅包含已采集的用量。"
+msgstr "Some periods are missing or failed collection and appear as gaps; totals include only collected usage."
+
+#: src/utils/display-text.ts
+msgid "部分时间段查询失败，图中保留空缺；窗口合计仅包含已取得的数据。"
+msgstr "Some period queries failed and appear as gaps; totals include only available data."
+
+#: src/pages/billing/services-page.tsx
+msgid "部分用量"
+msgstr "Partial usage"
+
+#: src/pages/billing/services-page.tsx
+msgid "部分用量估算"
+msgstr "Partial usage estimate"
+
+#: src/utils/display-text.ts
+msgid "部分费用缺少对应的资源用量或时段尚未结束，显示为未归属；不会按已有资源比例放大补齐。"
+msgstr "Costs with missing resource usage or unfinished periods are unattributed; available resources are not scaled to fill the gap."
+
+#: src/utils/display-text.ts
+msgid "部分资源用量数值无效，图中保留空缺。"
+msgstr "Some resource usage values are invalid and appear as gaps."
+
+#: src/components/billing/billing-chart.tsx
+#: src/components/billing/service-trend-chart.tsx
+msgid "采集"
+msgstr "Collected"
+
+#: src/layouts/billing-layout.tsx
+msgid "采集中"
+msgstr "Collecting"
+
+#: src/components/billing/resource-usage-trend.tsx
+#: src/components/billing/service-trend-panel.tsx
+#: src/pages/billing/daily-services-page.tsx
+#: src/pages/settings/settings-page.tsx
+msgid "重试"
+msgstr "Retry"
+
+#: src/pages/settings/settings-page.tsx
+msgid "隐藏密钥"
+msgstr "Hide secret"
+
+#: src/pages/settings/settings-page.tsx
+msgid "预算 Webhook 地址"
+msgstr "Budget webhook URL"
+
+#: src/pages/settings/settings-page.tsx
+msgid "预算通知"
+msgstr "Budget notifications"
+
+#: src/pages/settings/settings-page.tsx
+msgid "预算阈值（美元分）"
+msgstr "Budget threshold (US cents)"
+
+#: src/pages/settings/settings-page.tsx
+msgid "预算阈值必须是正整数，单位为美元分。"
+msgstr "The budget threshold must be a positive integer in US cents."
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "额度使用比例"
+msgstr "Allowance used"
+
+#: src/pages/settings/settings-page.tsx
+msgid "飞书 Webhook 地址"
+msgstr "Feishu webhook URL"
+
+#: src/pages/settings/settings-page.tsx
+msgid "飞书通知"
+msgstr "Feishu notifications"
+
+#: src/pages/settings/settings-page.tsx
+#~ msgid "飞书通知语言"
+#~ msgstr "Feishu notification language"
+
+#: src/layouts/billing-layout.tsx
+msgid "麦迪文"
+msgstr "Medivh"

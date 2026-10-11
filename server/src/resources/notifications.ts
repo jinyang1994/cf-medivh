@@ -1,3 +1,4 @@
+import type { NotificationLocale } from '@/services/notification-settings';
 import { createHash } from 'node:crypto';
 import type { loadConfig } from '@/config';
 import { createFeishuSender } from '@/resources/feishu';
@@ -67,9 +68,12 @@ export function createBudgetExtension(
 /** Optional integrations are assembled here; collection and delivery only know the interface. */
 export function createNotificationExtensions(
   config: Pick<ReturnType<typeof loadConfig>, 'feishu' | 'budgetWebhook'>,
+  language: () => NotificationLocale = () => 'zh-CN',
 ): NotificationExtension[] {
   return [
-    ...(config.feishu ? [createFeishuExtension(createFeishuSender(config.feishu))] : []),
+    ...(config.feishu
+      ? [createFeishuExtension(createFeishuSender(config.feishu, { language }))]
+      : []),
     ...(config.budgetWebhook
       ? [
           createBudgetExtension(

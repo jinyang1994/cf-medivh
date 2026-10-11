@@ -398,3 +398,29 @@ test('Feishu bounds failure reasons and escapes mention markup using the same li
     ),
   });
 });
+
+test('Feishu reads the latest language for each send, including failures and queued summaries', async () => {
+  let language: 'en' | 'zh-CN' = 'en';
+  const texts: string[] = [];
+  const sender = createFeishuSender(
+    { webhookUrl },
+    {
+      language: () => language,
+      fetch: async (_url, init) => {
+        texts.push(JSON.parse(String(init?.body)).content.text);
+        return Response.json({ code: 0 });
+      },
+    },
+  );
+  await sender(notification, { ...notification, point: { ...notification.point, localTotal: 5 } });
+  assert.match(texts[0]!, /^Cloudflare usage bill/);
+  assert.match(texts[0]!, /Change since last report: USD 0.659403/);
+  assert.match(texts[0]!, /Collection time \(UTC\+08:00\): 2026-10-08 20:10:07/);
+  await sender({ ...failureNotification, errors: [], lastSuccessfulAt: null });
+  assert.match(texts[1]!, /Cloudflare data collection failed/);
+  assert.match(texts[1]!, /Reason: Collection incomplete/);
+  assert.match(texts[1]!, /No successful collection yet/);
+  language = 'zh-CN';
+  await sender(notification);
+  assert.match(texts[2]!, /^Cloudflare 用量账单/);
+});

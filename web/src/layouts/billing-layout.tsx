@@ -1,5 +1,7 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { RefreshCw, AlertCircle, Clock3 } from 'lucide-react';
+import { RefreshCw, AlertCircle, Clock3, Settings } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -12,6 +14,8 @@ import type { BillingDashboardContext } from '@/types/billing';
 import { timestamp } from '@/utils/format';
 
 export function BillingLayout() {
+  const { t } = useLingui();
+
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
   useLayoutEffect(() => {
@@ -30,11 +34,11 @@ export function BillingLayout() {
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
       <header ref={headerRef} className="fixed inset-x-0 top-0 z-40 border-b bg-background">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div className="flex items-center gap-3">
             <img
               src="/medivh.svg?v=2"
-              alt="麦迪文"
+              alt={t`麦迪文`}
               width={32}
               height={32}
               className="size-8 shrink-0"
@@ -42,8 +46,8 @@ export function BillingLayout() {
             <h1 className="text-xl font-semibold tracking-tight">Cloudflare Medivh</h1>
           </div>
           <nav
-            aria-label="账单页面"
-            className="order-last flex w-full gap-1 lg:order-none lg:w-auto"
+            aria-label={t`账单页面`}
+            className="order-last flex w-full flex-wrap justify-center gap-1 xl:order-none xl:w-auto"
           >
             {BILLING_NAVIGATION.map(([path, label]) => (
               <Button
@@ -59,7 +63,7 @@ export function BillingLayout() {
                 asChild
               >
                 <NavLink to={path} end={path !== BILLING_PATHS.services}>
-                  {label}
+                  {displayText(label)}
                 </NavLink>
               </Button>
             ))}
@@ -70,8 +74,8 @@ export function BillingLayout() {
                 href="https://x.com/jinyang1994"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="访问我的 X 主页"
-                title="X 主页"
+                aria-label={t`访问我的 X 主页`}
+                title={t`X 主页`}
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.64 7.584H.47l8.6-9.835L0 1.154h7.594l5.243 6.932Zm-1.29 19.49h2.039L6.487 3.24H4.3Z" />
@@ -83,6 +87,11 @@ export function BillingLayout() {
               errors={collection?.errors ?? []}
               warnings={collection?.warnings ?? []}
             />
+            <Button variant="ghost" size="icon-sm" asChild>
+              <NavLink to="/settings" aria-label={t`设置`} title={t`设置`}>
+                <Settings aria-hidden="true" />
+              </NavLink>
+            </Button>
           </div>
         </div>
       </header>
@@ -91,18 +100,24 @@ export function BillingLayout() {
         {error && (
           <Alert variant="destructive" role="alert">
             <AlertCircle aria-hidden="true" />
-            <AlertTitle>无法加载账单</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTitle>
+              <Trans>无法加载账单</Trans>
+            </AlertTitle>
+            <AlertDescription>{displayText(error)}</AlertDescription>
           </Alert>
         )}
-        {data ? (
+        {pathname === '/settings' ? (
+          <Outlet />
+        ) : data ? (
           <Outlet context={{ data } satisfies BillingDashboardContext} />
         ) : loading ? (
           <BillingLoading />
         ) : (
           <Card>
             <CardContent>
-              <p className="py-10 text-center text-sm text-muted-foreground">账单暂不可用</p>
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                <Trans>账单暂不可用</Trans>
+              </p>
             </CardContent>
           </Card>
         )}
@@ -114,10 +129,14 @@ export function BillingLayout() {
               ) : (
                 <Clock3 className="size-3.5" aria-hidden="true" />
               )}
-              {collection.running ? '采集中' : '每 10 分钟采集'}
-              <span>{data?.asOf ? `用量截至 ${timestamp(data.asOf)} UTC` : '尚未采集用量'}</span>
+              {collection.running ? t`采集中` : t`每 10 分钟采集`}
+              <span>
+                {data?.asOf ? t`用量截至 ${{ value0: timestamp(data.asOf) }} UTC` : t`尚未采集用量`}
+              </span>
             </span>
-            <span>下次采集 {timestamp(collection.nextRun)} UTC</span>
+            <span>
+              <Trans>下次采集</Trans> {timestamp(collection.nextRun)} UTC
+            </span>
           </footer>
         )}
       </main>

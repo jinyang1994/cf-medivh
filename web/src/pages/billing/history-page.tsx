@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { CheckCircle2, Clock3 } from 'lucide-react';
 import { HistoryTable } from '@/components/billing/history-table';
 import { Badge } from '@/components/ui/badge';
@@ -10,16 +11,18 @@ export function HistoryPage() {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-semibold tracking-tight">每日核对</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          <Trans>每日核对</Trans>
+        </h2>
         {pending > 0 ? (
           <Badge variant="outline">
             <Clock3 />
-            {pending} 天待同步
+            <Trans>{{ count: pending }} 天待同步</Trans>
           </Badge>
         ) : (
           <Badge variant="secondary">
             <CheckCircle2 />
-            官方已同步
+            <Trans>官方已同步</Trans>
           </Badge>
         )}
       </div>

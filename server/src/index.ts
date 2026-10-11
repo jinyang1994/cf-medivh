@@ -1,3 +1,5 @@
+import { notificationConfig } from '@/services/runtime-settings';
+import { notificationLanguage } from '@/services/notification-settings';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -16,9 +18,12 @@ const collector = new Collector(
   store,
   createCloudflareProvider({ accountId, token }),
   undefined,
-  createNotificationExtensions(config),
+  () =>
+    createNotificationExtensions(notificationConfig(store, config), () =>
+      notificationLanguage(store),
+    ),
 );
-const app = createApp(store, collector, resolve(root, 'web/dist'));
+const app = createApp(store, collector, resolve(root, 'web/dist'), config);
 app.on('error', (error: Error) => console.error('HTTP request failed:', error.message));
 const server = app.listen(port, host, () =>
   console.log(`Cloudflare billing: http://${host}:${port}`),

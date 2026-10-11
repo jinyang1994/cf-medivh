@@ -1,3 +1,5 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import { ResourceUsageTrendContent } from '@/components/billing/resource-usage-trend';
 import { ServiceTrendPlot } from '@/components/billing/service-trend-chart';
@@ -22,14 +24,16 @@ function TrendChartHeader({
   resolution: Resolution;
   onResolutionChange: (resolution: Resolution) => void;
 }) {
+  const { t } = useLingui();
+
   return (
     <CardHeader>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <CardTitle>{title}</CardTitle>
-          {unit && <Badge variant="outline">{unit}</Badge>}
+          {unit && <Badge variant="outline">{displayText(unit)}</Badge>}
         </div>
-        <div role="group" aria-label={`${title}时间范围`} className="flex gap-1">
+        <div role="group" aria-label={t`${{ value0: title }}时间范围`} className="flex gap-1">
           {(['ten-minute', 'daily'] as const).map((item) => (
             <Button
               key={item}
@@ -38,7 +42,7 @@ function TrendChartHeader({
               aria-pressed={resolution === item}
               onClick={() => onResolutionChange(item)}
             >
-              {item === 'ten-minute' ? '近 48 小时' : '本账期 · 每日'}
+              {item === 'ten-minute' ? t`近 48 小时` : t`本账期 · 每日`}
             </Button>
           ))}
         </div>
@@ -64,6 +68,8 @@ export function ServiceTrendPanel({
   loading: boolean;
   refresh: () => void;
 }) {
+  const { t } = useLingui();
+
   const [usageResolution, setUsageResolution] = useState<Resolution>('ten-minute');
   const [costResolution, setCostResolution] = useState<Resolution>('ten-minute');
   const resource = useResourceTrend(service, meter ?? '', usageResolution, meter !== null);
@@ -73,9 +79,9 @@ export function ServiceTrendPanel({
   return (
     <>
       {meter !== null && (
-        <Card role="region" aria-label="用量图表">
+        <Card role="region" aria-label={t`用量图表`}>
           <TrendChartHeader
-            title="用量"
+            title={t`用量`}
             unit={resource.data?.unit ?? summary?.unit ?? data?.unit}
             resolution={usageResolution}
             onResolutionChange={setUsageResolution}
@@ -84,21 +90,23 @@ export function ServiceTrendPanel({
             {fallback ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  {fallback} 以下显示已采集的周期累计用量。
+                  {displayText(fallback)} <Trans>以下显示已采集的周期累计用量。</Trans>
                 </p>
                 {error && (
                   <div
                     role="alert"
                     className="rounded-md border border-destructive/30 px-4 py-3 text-sm text-destructive"
                   >
-                    {data ? `刷新失败，显示上次数据：${error}` : error}
+                    {data
+                      ? t`刷新失败，显示上次数据：${{ value0: displayText(error) }}`
+                      : displayText(error)}
                     <Button size="sm" variant="outline" onClick={refresh} className="ml-3">
-                      重试
+                      <Trans>重试</Trans>
                     </Button>
                   </div>
                 )}
                 {loading && !data && (
-                  <div role="status" aria-label="正在加载服务趋势">
+                  <div role="status" aria-label={t`正在加载服务趋势`}>
                     <Skeleton className="h-80 w-full sm:h-96" />
                   </div>
                 )}
@@ -112,9 +120,9 @@ export function ServiceTrendPanel({
           </CardContent>
         </Card>
       )}
-      <Card role="region" aria-label="费用图表">
+      <Card role="region" aria-label={t`费用图表`}>
         <TrendChartHeader
-          title="费用"
+          title={t`费用`}
           unit={cost.data?.currency ?? data?.currency}
           resolution={costResolution}
           onResolutionChange={setCostResolution}

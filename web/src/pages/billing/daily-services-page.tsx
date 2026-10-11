@@ -1,3 +1,5 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,6 +19,8 @@ import type { DailyServices } from '@/types/billing';
 import { date, money, quantity } from '@/utils/format';
 
 export function DailyServicesPage() {
+  const { i18n, t } = useLingui();
+
   const navigate = useNavigate();
   const { date: selected = '' } = useParams();
   const dashboard = useBillingDashboard();
@@ -71,10 +75,10 @@ export function DailyServicesPage() {
           onClick={() => void navigate(`/billing/history/${previous}`)}
         >
           <ChevronLeft />
-          前一天
+          <Trans>前一天</Trans>
         </Button>
         <h2 className="text-center text-base font-semibold tracking-tight sm:text-2xl">
-          {date(selected)} · 服务明细
+          {date(selected)} <Trans>· 服务明细</Trans>
         </h2>
         <Button
           className="justify-self-end"
@@ -83,7 +87,7 @@ export function DailyServicesPage() {
           disabled={!available(next)}
           onClick={() => void navigate(`/billing/history/${next}`)}
         >
-          后一天
+          <Trans>后一天</Trans>
           <ChevronRight />
         </Button>
       </div>
@@ -91,25 +95,37 @@ export function DailyServicesPage() {
         <CardContent>
           {current?.error ? (
             <div role="alert" className="flex items-center gap-3 py-6">
-              <span>{current.error}</span>
+              <span>{displayText(current.error)}</span>
               <Button variant="outline" size="sm" onClick={() => setAttempt((value) => value + 1)}>
-                重试
+                <Trans>重试</Trans>
               </Button>
             </div>
           ) : !data ? (
             <p role="status" className="py-10 text-center text-muted-foreground">
-              加载中…
+              <Trans>加载中…</Trans>
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>服务 / 计费项</TableHead>
-                  <TableHead className="text-right">当日用量</TableHead>
-                  <TableHead className="text-right">单价</TableHead>
-                  <TableHead className="text-right">额度使用比例</TableHead>
-                  <TableHead className="text-right">当日超额用量</TableHead>
-                  <TableHead className="text-right">当日费用</TableHead>
+                  <TableHead>
+                    <Trans>服务 / 计费项</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>当日用量</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>单价</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>额度使用比例</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>当日超额用量</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>当日费用</Trans>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,35 +148,41 @@ export function DailyServicesPage() {
                           to={`/billing/history/${selected}/trend?${new URLSearchParams({ service: item.service, meter: item.key })}`}
                           className="block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <div className="font-medium">{item.service}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">{item.name}</div>
+                          <div className="font-medium">{displayText(item.service)}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {displayText(item.name)}
+                          </div>
                         </NavLink>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        <div>{item.quantity === null ? '待补全' : quantity(item.quantity)}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{item.unit}</div>
+                        <div>{item.quantity === null ? t`待补全` : quantity(item.quantity)}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {displayText(item.unit)}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         <div>{money(item.pricing.unitPrice, item.pricing.currency, 'rate')}</div>
                         <div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">
-                          / {quantity(item.pricing.unitSize)} {item.unit}
+                          / {quantity(item.pricing.unitSize)} {displayText(item.unit)}
                         </div>
                         {!!item.pricing.fixedFee && (
                           <div className="mt-1 text-xs text-muted-foreground">
-                            固定费 {money(item.pricing.fixedFee, item.pricing.currency)} / 账期
+                            <Trans>固定费</Trans>{' '}
+                            {money(item.pricing.fixedFee, item.pricing.currency)}{' '}
+                            <Trans>/ 账期</Trans>
                           </div>
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         <div className="flex items-center justify-end gap-2">
                           <Badge variant="outline">
-                            {!hasAllowance ? '无免费额度' : daily ? '按日免费' : '按月免费'}
+                            {!hasAllowance ? t`无免费额度` : daily ? t`按日免费` : t`按月免费`}
                           </Badge>
                           {hasAllowance && (
                             <span>
                               {item.allowanceRatio === null
-                                ? '待补全'
-                                : new Intl.NumberFormat('zh-CN', {
+                                ? t`待补全`
+                                : new Intl.NumberFormat(i18n.locale, {
                                     style: 'percent',
                                     maximumFractionDigits: 2,
                                   }).format(item.allowanceRatio)}
@@ -170,7 +192,7 @@ export function DailyServicesPage() {
                         {hasAllowance && item.allowanceUsed !== null && (
                           <div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">
                             {quantity(item.allowanceUsed)} /{' '}
-                            {quantity(item.pricing.includedQuantity)} {item.unit}
+                            {quantity(item.pricing.includedQuantity)} {displayText(item.unit)}
                           </div>
                         )}
                       </TableCell>
@@ -179,16 +201,20 @@ export function DailyServicesPage() {
                           {item.key === '__base_fee'
                             ? '—'
                             : item.overageQuantity === null
-                              ? '待补全'
+                              ? t`待补全`
                               : quantity(item.overageQuantity)}
                         </div>
                         {item.key !== '__base_fee' && (
-                          <div className="mt-1 text-xs text-muted-foreground">{item.unit}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {displayText(item.unit)}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {item.cost === null ? (
-                          <Badge variant="outline">待补全</Badge>
+                          <Badge variant="outline">
+                            <Trans>待补全</Trans>
+                          </Badge>
                         ) : (
                           money(item.cost, data.currency, true)
                         )}
@@ -199,7 +225,7 @@ export function DailyServicesPage() {
                 {!data.services.length && (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      当日用量待采集
+                      <Trans>当日用量待采集</Trans>
                     </TableCell>
                   </TableRow>
                 )}

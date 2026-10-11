@@ -1,3 +1,5 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import { AlertCircle, Bell, Info, X } from 'lucide-react';
 import { Popover } from 'radix-ui';
@@ -13,6 +15,8 @@ export function BillingNotifications({
   errors: string[];
   warnings: string[];
 }) {
+  const { t } = useLingui();
+
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAllRead } = useBillingNotifications(
     cycleId,
@@ -34,8 +38,8 @@ export function BillingNotifications({
           variant="ghost"
           size="icon-sm"
           className="relative"
-          aria-label={unreadCount > 0 ? `通知，${unreadCount} 条未读` : '通知'}
-          title="通知"
+          aria-label={unreadCount > 0 ? t`通知，${{ value0: unreadCount }} 条未读` : t`通知`}
+          title={t`通知`}
         >
           <Bell className="size-4" aria-hidden="true" />
           {unreadCount > 0 && (
@@ -56,28 +60,30 @@ export function BillingNotifications({
         >
           <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
             <Popover.Title className="text-sm font-semibold">
-              通知
+              <Trans>通知</Trans>
               {notifications.length > 0 && (
                 <span className="ml-2 font-normal text-muted-foreground">
-                  {notifications.length} 条
+                  <Trans>{{ count: notifications.length }} 条</Trans>
                 </span>
               )}
             </Popover.Title>
             <Popover.Description className="sr-only">
-              账单数据同步和用量提示，打开即标记为已读。
+              <Trans>账单数据同步和用量提示，打开即标记为已读。</Trans>
             </Popover.Description>
             <Popover.Close asChild>
-              <Button variant="ghost" size="icon-xs" aria-label="关闭通知">
+              <Button variant="ghost" size="icon-xs" aria-label={t`关闭通知`}>
                 <X aria-hidden="true" />
               </Button>
             </Popover.Close>
           </div>
           {notifications.length === 0 ? (
-            <p className="px-4 py-10 text-center text-sm text-muted-foreground">暂无通知</p>
+            <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+              <Trans>暂无通知</Trans>
+            </p>
           ) : (
             <ul
               tabIndex={0}
-              aria-label="通知列表"
+              aria-label={t`通知列表`}
               className="max-h-[min(24rem,60vh)] overflow-y-auto overscroll-contain p-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             >
               {notifications.map((notice) => (
@@ -95,10 +101,10 @@ export function BillingNotifications({
                   )}
                   <div className="min-w-0">
                     <p className="text-sm font-medium">
-                      {notice.kind === 'error' ? '数据同步失败' : '数据提示'}
+                      {notice.kind === 'error' ? t`数据同步失败` : t`数据提示`}
                     </p>
                     <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
-                      {notice.message}
+                      {displayText(notice.message)}
                     </p>
                   </div>
                 </li>

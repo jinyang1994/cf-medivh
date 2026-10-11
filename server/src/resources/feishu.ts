@@ -1,3 +1,5 @@
+import { englishDiagnostic } from '@/resources/notification-diagnostics';
+import type { NotificationLocale } from '@/services/notification-settings';
 import { createHmac } from 'node:crypto';
 import { utcDay } from '@/utils/dates';
 import type {
@@ -13,6 +15,7 @@ interface FeishuConfig {
 }
 
 interface SenderOptions {
+  language?: () => NotificationLocale;
   fetch?: typeof fetch;
   now?: () => Date;
 }
@@ -36,6 +39,7 @@ function summaryNotes(messages: string[], label: string): string[] {
 function billingChange(
   { cycle, point }: BillingNotification,
   previous: BillingNotification | null | undefined,
+  language: NotificationLocale = 'zh-CN',
 ): string {
   if (
     !previous ||
@@ -43,12 +47,15 @@ function billingChange(
     previous.cycle.start !== cycle.start ||
     previous.cycle.end !== cycle.end
   )
-    return '本账期首次汇报，暂无对比';
-  if (previous.cycle.currency !== cycle.currency) return '币种变化，暂无对比';
+    return language === 'en'
+      ? 'First report in this cycle; no comparison yet'
+      : '本账期首次汇报，暂无对比';
+  if (previous.cycle.currency !== cycle.currency)
+    return language === 'en' ? 'Currency changed; no comparison available' : '币种变化，暂无对比';
   const before = previous.point.localTotal;
   const current = point.localTotal;
   if (before === null || current === null || !Number.isFinite(before) || !Number.isFinite(current))
-    return '待校正';
+    return language === 'en' ? 'Pending correction' : '待校正';
   const delta = Number((current - before).toFixed(6));
   return `${cycle.currency} ${delta.toFixed(6)}`;
 }
@@ -87,6 +94,55 @@ function failureText(notification: CollectionFailureNotification): string {
   ].join('\n');
 }
 
+function englishText(
+  notification: Notification,
+  previousBilling?: BillingNotification | null,
+): string {
+  const notes = (messages: string[], label: string) => {
+    const result = messages.slice(0, 5).map((message) => {
+      const text = englishDiagnostic(message).replace(/</g, '＜').replace(/>/g, '＞');
+      return `${label}: ${text.length > 300 ? `${text.slice(0, 300)}…` : text}`;
+    });
+    if (messages.length > result.length)
+      result.push(`${messages.length - result.length} more notices; see the dashboard.`);
+    return result;
+  };
+  const cycle = notification.cycle;
+  const period = cycle
+    ? [`Billing cycle (UTC): ${cycle.start} to ${cycle.end} (end exclusive)`]
+    : [];
+  if (isCollectionFailure(notification)) {
+    return [
+      'Cloudflare data collection failed',
+      `Collection time (UTC+08:00): ${beijingTime(notification.attemptedAt, 'Pending correction')}`,
+      ...period,
+      ...notes(
+        notification.errors.length ? notification.errors : ['Collection incomplete'],
+        'Reason',
+      ),
+      `Last successful collection (UTC+08:00): ${beijingTime(notification.lastSuccessfulAt, 'No successful collection yet')}`,
+      notification.lastSuccessfulAt
+        ? 'No new cost results were generated. Keeping the last successful data; retrying next round.'
+        : 'No cost results were generated; retrying next round.',
+    ].join('\n');
+  }
+  const amount = (value: number | null) =>
+    value !== null && Number.isFinite(value)
+      ? `${notification.cycle.currency} ${value.toFixed(6)}`
+      : 'Pending correction';
+  return [
+    'Cloudflare usage bill',
+    `Collection time (UTC+08:00): ${beijingTime(notification.point.observedAt, 'Pending correction')}`,
+    ...period,
+    `Official bill + forecast: ${amount(notification.point.currentTotal)}`,
+    `Local data + forecast: ${amount(notification.point.localTotal)}`,
+    `Change since last report: ${billingChange(notification, previousBilling, 'en')}`,
+    `Today’s increase (UTC): ${amount(notification.point.todayLocal)}`,
+    `Official total through yesterday: ${amount(notification.point.officialHistorical)}`,
+    ...notes(notification.warnings, 'Note'),
+  ].join('\n');
+}
+
 function isCollectionFailure(
   notification: Notification,
 ): notification is CollectionFailureNotification {
@@ -101,6 +157,7 @@ export function createFeishuSender(
   const fetcher = options.fetch ?? fetch;
   const now = options.now ?? (() => new Date());
   return async (notification, previousBilling) => {
+    const language = options.language?.() ?? 'zh-CN';
     const payload: {
       msg_type: 'text';
       content: { text: string };
@@ -109,9 +166,12 @@ export function createFeishuSender(
     } = {
       msg_type: 'text',
       content: {
-        text: isCollectionFailure(notification)
-          ? failureText(notification)
-          : billingText(notification, previousBilling),
+        text:
+          language === 'en'
+            ? englishText(notification, previousBilling)
+            : isCollectionFailure(notification)
+              ? failureText(notification)
+              : billingText(notification, previousBilling),
       },
     };
     if (config.secret) {

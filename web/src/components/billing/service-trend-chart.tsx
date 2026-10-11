@@ -1,3 +1,6 @@
+import { displayText } from '@/utils/display-text';
+import { i18n } from '@lingui/core';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, type DotItemDotProps } from 'recharts';
 import {
@@ -14,17 +17,9 @@ type Metric = 'cost' | 'quantity';
 type PlotPoint = ServiceTrendPoint & { time: number };
 type SeriesKey = 'localCost' | 'officialCost' | 'quantity';
 
-const costConfig = {
-  localCost: { label: '本地累计费用', color: 'var(--chart-2)' },
-  officialCost: { label: '官方累计费用', color: 'var(--chart-5)' },
-} satisfies ChartConfig;
-const quantityConfig = {
-  quantity: { label: '累计用量', color: 'var(--chart-2)' },
-} satisfies ChartConfig;
-
 function preciseQuantity(value: number) {
   if (value !== 0 && Math.abs(value) < 1e-10) return value.toExponential(6);
-  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 12 }).format(value);
+  return new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 12 }).format(value);
 }
 
 function utcLabel(time: number, resolution: Resolution, sameDay: boolean) {
@@ -43,6 +38,22 @@ export function ServiceTrendPlot({
   resolution: Resolution;
   metric?: Metric;
 }) {
+  const { i18n, t } = useLingui();
+
+  const costConfig = {
+    localCost: {
+      label: t`本地累计费用`,
+      color: 'var(--chart-2)',
+    },
+    officialCost: {
+      label: t`官方累计费用`,
+      color: 'var(--chart-5)',
+    },
+  } satisfies ChartConfig;
+  const quantityConfig = {
+    quantity: { label: t`累计用量`, color: 'var(--chart-2)' },
+  } satisfies ChartConfig;
+
   const [hiddenSeries, setHiddenSeries] = useState<SeriesKey[]>([]);
   const chartConfig: ChartConfig = metric === 'quantity' ? quantityConfig : costConfig;
   const series: SeriesKey[] =
@@ -83,7 +94,7 @@ export function ServiceTrendPlot({
     12,
     Math.max(metric === 'cost' ? 2 : 0, 1 - Math.floor(Math.log10(step))),
   );
-  const axisFormat = new Intl.NumberFormat('zh-CN', {
+  const axisFormat = new Intl.NumberFormat(i18n.locale, {
     ...(metric === 'cost' ? { style: 'currency', currency: data.currency } : {}),
     maximumFractionDigits: decimals,
     minimumFractionDigits: metric === 'cost' ? decimals : 0,
@@ -154,7 +165,8 @@ export function ServiceTrendPlot({
                         </div>
                         {resolution === 'ten-minute' && point.observedAt && (
                           <div className="mt-1 font-normal text-muted-foreground">
-                            采集 {point.observedAt.slice(11, 19)} UTC
+                            <Trans>采集</Trans>
+                            {point.observedAt.slice(11, 19)} UTC
                           </div>
                         )}
                       </>
@@ -168,7 +180,7 @@ export function ServiceTrendPlot({
                       <span className="font-mono font-medium tabular-nums">
                         {metric === 'cost'
                           ? money(Number(value), data.currency, 'rate')
-                          : `${preciseQuantity(Number(value))} ${data.unit}`}
+                          : `${preciseQuantity(Number(value))} ${displayText(data.unit)}`}
                       </span>
                     </div>
                   )}
@@ -200,13 +212,16 @@ export function ServiceTrendPlot({
       ) : (
         <div className="flex h-80 items-center justify-center px-4 text-center text-sm text-muted-foreground sm:h-96">
           {visibleSeries.length === 0
-            ? '点击下方图例显示曲线。'
+            ? t`点击下方图例显示曲线。`
             : resolution === 'ten-minute'
-              ? '暂无完整的 10 分钟采集记录，可切换到每日查看历史数据。'
-              : '暂无可用的每日趋势，等待用量采集或补全。'}
+              ? t`暂无完整的 10 分钟采集记录，可切换到每日查看历史数据。`
+              : t`暂无可用的每日趋势，等待用量采集或补全。`}
         </div>
       )}
-      <ul aria-label="曲线图例" className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+      <ul
+        aria-label={t`曲线图例`}
+        className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs"
+      >
         {series.map((key) => {
           const visible = !hiddenSeries.includes(key);
           return (

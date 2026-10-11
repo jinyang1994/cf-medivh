@@ -1,3 +1,5 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
@@ -11,6 +13,8 @@ import { date } from '@/utils/format';
 
 type Detail = { date: string; name: string; usage: ResourceUsageTrend; cost: ResourceCostTrend };
 export function DailyMeterTrendPage() {
+  const { t } = useLingui();
+
   const navigate = useNavigate();
   const dashboard = useBillingDashboard();
   const { date: selected = '' } = useParams();
@@ -73,18 +77,18 @@ export function DailyMeterTrendPage() {
           onClick={() => navigateDay(previous)}
         >
           <ChevronLeft />
-          前一天
+          <Trans>前一天</Trans>
         </Button>
         <h2 className="text-center text-base font-semibold tracking-tight sm:text-2xl">
           <NavLink
             to={`/billing/history/${selected}`}
             className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`返回 ${date(selected)} 服务明细`}
+            aria-label={t`返回 ${{ value0: date(selected) }} 服务明细`}
           >
             {date(selected)}
           </NavLink>
           {' · '}
-          {service} · {current?.data?.name ?? '计费项趋势'}
+          {displayText(service)} · {current?.data ? displayText(current.data.name) : t`计费项趋势`}
         </h2>
         <Button
           className="justify-self-end"
@@ -93,7 +97,7 @@ export function DailyMeterTrendPage() {
           disabled={!available(next)}
           onClick={() => navigateDay(next)}
         >
-          后一天
+          <Trans>后一天</Trans>
           <ChevronRight />
         </Button>
       </div>
@@ -101,10 +105,12 @@ export function DailyMeterTrendPage() {
         <Card key={metric}>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle>{metric === 'usage' ? '当日用量' : '当日累计费用'}</CardTitle>
+              <CardTitle>{metric === 'usage' ? t`当日用量` : t`当日累计费用`}</CardTitle>
               {current?.data && (
                 <Badge variant="outline">
-                  {metric === 'usage' ? current.data.usage.unit : current.data.cost.currency}
+                  {metric === 'usage'
+                    ? displayText(current.data.usage.unit)
+                    : current.data.cost.currency}
                 </Badge>
               )}
             </div>

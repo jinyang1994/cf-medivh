@@ -9,3 +9,6 @@ data/
 .wrangler/
 .DS_Store
 coverage/
+
+# Generated Lingui catalogs (compiled by dev/build/test scripts)
+web/src/locales/*/messages.ts

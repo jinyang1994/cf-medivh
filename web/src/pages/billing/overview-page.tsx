@@ -1,3 +1,5 @@
+import { displayText } from '@/utils/display-text';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowUpRight } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { BillingChart } from '@/components/billing/billing-chart';
@@ -20,6 +22,8 @@ import { cycleProgress, date, inclusiveEnd, money, shortDate } from '@/utils/for
 import { serviceTotals } from '@/utils/service-totals';
 
 export function OverviewPage() {
+  const { t } = useLingui();
+
   const data = useBillingDashboard();
   const { totals, currency } = data;
   const services = serviceTotals(data.services);
@@ -30,12 +34,14 @@ export function OverviewPage() {
     .at(-1);
   return (
     <>
-      <section aria-label="周期费用" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label={t`周期费用`} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          title="账期天数"
+          title={t`账期天数`}
           value={
             progress ? (
-              <span aria-label={`当前账期第 ${progress.current} 天，共 ${progress.total} 天`}>
+              <span
+                aria-label={t`当前账期第 ${{ value0: progress.current }} 天，共 ${{ value1: progress.total }} 天`}
+              >
                 {progress.current}
                 <span className="ml-1 text-xl font-normal text-muted-foreground">
                   /{progress.total}
@@ -49,27 +55,29 @@ export function OverviewPage() {
           detail={
             data.cycle
               ? `${date(data.cycle.start)} — ${inclusiveEnd(data.cycle.end)} UTC`
-              : '等待账期信息'
+              : t`等待账期信息`
           }
         />
         <MetricCard
-          title="今日实时费用"
+          title={t`今日实时费用`}
           value={money(totals.todayLocal, currency, true)}
-          detail={`${date(data.today)} · 本地估算`}
+          detail={t`${{ value0: date(data.today) }} · 本地估算`}
         />
         <MetricCard
-          title="历史官方累计"
+          title={t`历史官方累计`}
           value={money(totals.officialHistorical, currency, true)}
           detail={
             totals.officialThrough
-              ? `截至 ${date(totals.officialThrough)}`
-              : '等待官方汇总'
+              ? t`截至 ${{ value0: date(totals.officialThrough) }}`
+              : t`等待官方汇总`
           }
         />
         <MetricCard
-          title="本地累计费用"
+          title={t`本地累计费用`}
           value={money(totals.localCumulative, currency, true)}
-          detail={`截至 ${date(data.today)} · ${totals.localCumulative !== null ? '本地估算' : '用量待补全'}`}
+          detail={t`截至 ${{ value0: date(data.today) }} · ${{
+            value1: totals.localCumulative !== null ? t`本地估算` : t`用量待补全`,
+          }}`}
         />
       </section>
       <BillingChart data={data} />
@@ -78,12 +86,18 @@ export function OverviewPage() {
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <CardTitle>服务费用</CardTitle>
-                {hasEstimatedServiceCost && <Badge variant="outline">本地预估</Badge>}
+                <CardTitle>
+                  <Trans>服务费用</Trans>
+                </CardTitle>
+                {hasEstimatedServiceCost && (
+                  <Badge variant="outline">
+                    <Trans>本地预估</Trans>
+                  </Badge>
+                )}
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <NavLink to={BILLING_PATHS.services}>
-                  全部明细
+                  <Trans>全部明细</Trans>
                   <ArrowUpRight />
                 </NavLink>
               </Button>
@@ -93,21 +107,27 @@ export function OverviewPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>服务</TableHead>
-                  <TableHead className="text-right">今日</TableHead>
-                  <TableHead className="text-right">周期累计</TableHead>
+                  <TableHead>
+                    <Trans>服务</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>今日</Trans>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Trans>周期累计</Trans>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {services.slice(0, 8).map((item) => (
-                  <TableRow key={item.service}>
+                  <TableRow key={displayText(item.service)}>
                     <TableCell className="font-medium">
                       <NavLink
                         to={serviceTrendPath(item.service)}
-                        aria-label={`查看 ${item.service} 费用趋势`}
+                        aria-label={t`查看 ${{ value0: displayText(item.service) }} 费用趋势`}
                         className="inline-flex rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        {item.service}
+                        {displayText(item.service)}
                       </NavLink>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -121,7 +141,7 @@ export function OverviewPage() {
                 {data.services.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                      暂无服务用量
+                      <Trans>暂无服务用量</Trans>
                     </TableCell>
                   </TableRow>
                 )}
@@ -132,10 +152,12 @@ export function OverviewPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle>最近核对</CardTitle>
+              <CardTitle>
+                <Trans>最近核对</Trans>
+              </CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <NavLink to={BILLING_PATHS.history}>
-                  每日明细
+                  <Trans>每日明细</Trans>
                   <ArrowUpRight />
                 </NavLink>
               </Button>
@@ -144,7 +166,8 @@ export function OverviewPage() {
           <CardContent>
             <div className="mb-4 flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">
-                本地 − 官方{latestComparison ? ` · ${shortDate(latestComparison.date)}` : ''}
+                <Trans>本地 − 官方</Trans>
+                {latestComparison ? ` · ${shortDate(latestComparison.date)}` : ''}
               </span>
               <span className="text-xl font-semibold tabular-nums">
                 {money(totals.difference, currency, true)}

@@ -1,3 +1,4 @@
+import { SettingsPage } from '@/pages/settings/settings-page';
 import { DailyMeterTrendPage } from '@/pages/billing/daily-meter-trend-page';
 import { DailyServicesPage } from '@/pages/billing/daily-services-page';
 import { Navigate, Route, Routes } from 'react-router';
@@ -12,6 +13,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<BillingLayout />}>
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path={BILLING_PATHS.overview} element={<OverviewPage />} />
         <Route path={BILLING_PATHS.services} element={<ServicesPage />} />
         <Route path={BILLING_PATHS.serviceTrend} element={<ServiceTrendPage />} />

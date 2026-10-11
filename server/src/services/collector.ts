@@ -27,7 +27,7 @@ export class Collector {
     readonly store: Store,
     readonly provider: CloudflareProvider,
     readonly clock: () => Date = () => new Date(),
-    extensions: NotificationExtension[] = [],
+    extensions: NotificationExtension[] | (() => NotificationExtension[]) = [],
   ) {
     this.notifications = new NotificationDispatcher(store, extensions, clock);
   }

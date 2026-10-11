@@ -8,9 +8,15 @@ export class NotificationDispatcher {
 
   constructor(
     private readonly store: Store,
-    private readonly extensions: NotificationExtension[],
+    private readonly extensionSource: NotificationExtension[] | (() => NotificationExtension[]),
     private readonly clock: () => Date,
   ) {}
+
+  private get extensions(): NotificationExtension[] {
+    return typeof this.extensionSource === 'function'
+      ? this.extensionSource()
+      : this.extensionSource;
+  }
 
   start(): void {
     if (this.shutdown.signal.aborted) this.shutdown = new AbortController();
@@ -49,6 +55,10 @@ export class NotificationDispatcher {
     for (const [index, { notification }] of pending.entries()) {
       if (index > 0) await this.pause(signal);
       while (!signal.aborted) {
+        // Re-read settings between attempts so disabling a target stops pending retries.
+        const active = this.extensions.find((target) => target.id === extension.id);
+        if (!active) return;
+        extension = active;
         try {
           const previousBilling =
             notification.kind === undefined || notification.kind === 'billing'

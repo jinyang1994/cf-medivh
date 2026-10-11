@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core';
 export function money(
   value: number | null | undefined,
   currency = 'USD',
@@ -5,7 +6,7 @@ export function money(
 ) {
   if (value == null || !Number.isFinite(value)) return '—';
   if (value !== 0 && Math.abs(value) < 1e-12) return `${currency} ${value.toExponential()}`;
-  return new Intl.NumberFormat('zh-CN', {
+  return new Intl.NumberFormat(i18n.locale || 'zh-CN', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
@@ -25,7 +26,7 @@ export function money(
 }
 
 export function quantity(value: number) {
-  return new Intl.NumberFormat('zh-CN', {
+  return new Intl.NumberFormat(i18n.locale || 'zh-CN', {
     maximumFractionDigits: value !== 0 && Math.abs(value) < 0.0001 ? 12 : 4,
   }).format(value);
 }

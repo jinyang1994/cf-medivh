@@ -277,3 +277,42 @@ test('Feishu configuration is opt-in and accepts only the official bot endpoint 
       },
     );
 });
+
+test('runtime extension changes take effect without rebuilding the collector and disabling preserves pending messages', async () => {
+  const store = new Store(':memory:');
+  let now = new Date('2026-10-01T12:00:00Z');
+  let enabled = true;
+  let fail = true;
+  let calls = 0;
+  const collector = new Collector(
+    store,
+    fixture(() => now),
+    () => now,
+    () =>
+      enabled
+        ? [
+            createFeishuExtension(async () => {
+              calls++;
+              if (fail) throw new Error('retry');
+            }),
+          ]
+        : [],
+  );
+  try {
+    await collector.tick();
+    assert.equal(calls, 1);
+    enabled = false;
+    now = new Date('2026-10-01T12:10:00Z');
+    await collector.tick();
+    assert.equal(calls, 1);
+    assert.equal(store.pendingNotifications(now.toISOString()).length, 1);
+    enabled = true;
+    fail = false;
+    await collector.tick();
+    assert.equal(calls, 2);
+    assert.equal(store.pendingNotifications(now.toISOString()).length, 0);
+  } finally {
+    collector.stop();
+    store.close();
+  }
+});

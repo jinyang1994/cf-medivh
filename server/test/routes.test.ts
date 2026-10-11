@@ -544,3 +544,104 @@ test('daily meter trend is read-only and validates the selected date and meter',
     400,
   );
 });
+
+test('shared language is persisted, accepts only supported languages and rejects foreign writes', async (t) => {
+  const { request, store } = await fixture(t);
+  assert.deepEqual(await (await request('/api/settings/language')).json(), {
+    language: 'zh-CN',
+  });
+  const put = (body: unknown, headers = {}) =>
+    request('/api/settings/language', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
+  assert.equal((await put({ language: 'en' })).status, 200);
+  assert.equal(store.get('feishuNotificationLanguage'), 'en');
+  assert.deepEqual(await (await request('/api/settings/language')).json(), { language: 'en' });
+  for (const body of [{ language: 'fr' }, {}, null, { language: 'en', extra: true }])
+    assert.equal((await put(body)).status, 400);
+  assert.equal((await put({ language: 'zh-CN' }, { Origin: 'https://example.com' })).status, 403);
+  assert.equal((await put({ language: 'zh-CN' }, { 'Sec-Fetch-Site': 'cross-site' })).status, 403);
+  assert.equal(
+    (await request('/api/settings/language', { method: 'PUT', body: 'language=en' })).status,
+    415,
+  );
+  assert.equal((await put({ language: 'en', padding: 'x'.repeat(1100) })).status, 413);
+  assert.deepEqual(await (await request('/api/settings/language')).json(), { language: 'en' });
+  assert.equal((await put({ language: 'zh-CN' })).status, 200);
+});
+
+test('settings API stores notification configuration with webhook URLs and only a masked secret', async (t) => {
+  const { request } = await fixture(t);
+  const settings = {
+    language: 'en',
+    feishu: {
+      enabled: true,
+      webhookUrl: 'https://open.feishu.cn/open-apis/bot/v2/hook/test-private',
+      signingSecret: 'test-secret',
+    },
+    budget: { enabled: false, thresholdCents: 30000 },
+  };
+  const response = await request('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
+  assert.equal(response.status, 200);
+  assert.doesNotMatch(await response.text(), /test-secret/);
+  const read = await request('/api/settings');
+  assertHeaders(read, true);
+  const value = await read.json();
+  assert.deepEqual(value.feishu, {
+    enabled: true,
+    webhookConfigured: true,
+    secretConfigured: true,
+    webhookUrl: settings.feishu.webhookUrl,
+    maskedSecret: 'test••••••••cret',
+  });
+  assert.equal(value.language, 'en');
+  const denied = await request('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://foreign.test' },
+    body: JSON.stringify(settings),
+  });
+  assert.equal(denied.status, 403);
+});
+
+test('header language and full settings share the notification language', async (t) => {
+  const { request, store } = await fixture(t);
+  const { notificationLanguage } = await import('@/services/notification-settings');
+  const headers = { 'Content-Type': 'application/json' };
+  assert.equal(
+    (
+      await request('/api/settings/language', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ language: 'en' }),
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await (await request('/api/settings')).json()).language, 'en');
+  assert.equal(notificationLanguage(store), 'en');
+  assert.equal(
+    (
+      await request('/api/settings', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          language: 'zh-CN',
+          feishu: { enabled: false },
+          budget: { enabled: false, thresholdCents: 30000 },
+        }),
+      })
+    ).status,
+    200,
+  );
+  assert.deepEqual(await (await request('/api/settings/language')).json(), { language: 'zh-CN' });
+  assert.equal(notificationLanguage(store), 'zh-CN');
+  assert.deepEqual(await (await request('/api/settings/notifications')).json(), {
+    language: 'zh-CN',
+  });
+});
