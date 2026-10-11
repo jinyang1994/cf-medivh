@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { Dashboard } from '@/types/billing';
-import { money } from '@/utils/format';
+import { date, money } from '@/utils/format';
 
 export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number }) {
   const rows = [...data.history]
@@ -28,7 +28,7 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
       <TableBody>
         {rows.map((item) => (
           <TableRow key={item.date}>
-            <TableCell className="whitespace-nowrap">{item.date}</TableCell>
+            <TableCell className="whitespace-nowrap">{date(item.date)}</TableCell>
             <TableCell className="text-right tabular-nums">
               {money(item.localTotal, data.currency, true)}
             </TableCell>

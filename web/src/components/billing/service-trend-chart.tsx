@@ -148,7 +148,8 @@ export function ServiceTrendPlot({
                         <div>
                           {point.timestamp
                             .slice(0, resolution === 'daily' ? 10 : 16)
-                            .replace('T', ' ')}{' '}
+                            .replace('T', ' ')
+                            .replaceAll('-', '/')}{' '}
                           UTC
                         </div>
                         {resolution === 'ten-minute' && point.observedAt && (

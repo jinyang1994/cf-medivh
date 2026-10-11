@@ -76,7 +76,7 @@ test('Feishu sends only a text summary with Beijing collection time, UTC cycle, 
   assert.equal(calls, 1);
 });
 
-test('Feishu reports sub-cent growth, reductions, and unchanged totals against the previous summary', async () => {
+test('Feishu reports local sub-cent growth, reductions, and unchanged totals against the previous summary', async () => {
   const cases = [
     { current: 5.658488, previous: 5.655608, expected: 'USD 0.002880' },
     { current: 5.655608, previous: 5.658488, expected: 'USD -0.002880' },
@@ -103,7 +103,7 @@ test('Feishu reports sub-cent growth, reductions, and unchanged totals against t
     )(
       {
         ...notification,
-        point: { ...notification.point, currentTotal: current, todayLocal: 0.001 },
+        point: { ...notification.point, localTotal: current, todayLocal: 0.001 },
       },
       {
         ...notification,
@@ -112,10 +112,40 @@ test('Feishu reports sub-cent growth, reductions, and unchanged totals against t
           ...notification.point,
           timestamp: '2026-10-07T23:50:00.000Z',
           observedAt: '2026-10-07T23:50:05.000Z',
-          currentTotal: previous,
+          currentTotal: 99,
           todayLocal: 0.1,
-          localTotal: 99,
+          localTotal: previous,
         },
+      },
+    );
+  }
+});
+
+test('Feishu calculates local increments regardless of missing or corrected official bills', async () => {
+  const officialTotals: [number | null, number | null][] = [
+    [null, null],
+    [5, null],
+    [null, 100],
+    [100, 5],
+  ];
+  for (const [before, current] of officialTotals) {
+    await createFeishuSender(
+      { webhookUrl },
+      {
+        fetch: async (_input, init) => {
+          const text = JSON.parse(String(init?.body)).content.text as string;
+          assert.match(text, /本次增量：USD 0\.002880/);
+          return Response.json({ code: 0 });
+        },
+      },
+    )(
+      {
+        ...notification,
+        point: { ...notification.point, currentTotal: current, localTotal: 5.658488 },
+      },
+      {
+        ...notification,
+        point: { ...notification.point, currentTotal: before, localTotal: 5.655608 },
       },
     );
   }

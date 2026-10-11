@@ -45,8 +45,8 @@ function billingChange(
   )
     return '本账期首次汇报，暂无对比';
   if (previous.cycle.currency !== cycle.currency) return '币种变化，暂无对比';
-  const before = previous.point.currentTotal;
-  const current = point.currentTotal;
+  const before = previous.point.localTotal;
+  const current = point.localTotal;
   if (before === null || current === null || !Number.isFinite(before) || !Number.isFinite(current))
     return '待校正';
   const delta = Number((current - before).toFixed(6));

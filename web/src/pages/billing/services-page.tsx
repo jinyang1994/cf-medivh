@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
 import { serviceTrendPath } from '@/constants/billing-navigation';
-import { money, quantity } from '@/utils/format';
+import { date, money, quantity } from '@/utils/format';
 
 export function ServicesPage() {
   const data = useBillingDashboard();
@@ -25,7 +25,7 @@ export function ServicesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-semibold tracking-tight">服务明细</h2>
         <span className="text-sm text-muted-foreground">
-          截至 {data.today} · {data.totals.localCumulative === null ? '部分用量' : '用量估算'}
+          截至 {date(data.today)} · {data.totals.localCumulative === null ? '部分用量' : '用量估算'}
           {' · 点击计费项查看趋势'}
         </span>
       </div>

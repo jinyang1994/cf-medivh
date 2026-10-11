@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { BillingChart } from '@/components/billing/billing-chart';
 import { HistoryTable } from '@/components/billing/history-table';
 import { MetricCard } from '@/components/billing/metric-card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -23,7 +24,6 @@ export function OverviewPage() {
   const { totals, currency } = data;
   const services = serviceTotals(data.services);
   const hasEstimatedServiceCost = services.some((item) => item.currentCost === null);
-  const estimateLabel = totals.localCumulative === null ? '部分用量估算' : '本地估算';
   const baseFee = data.cycle?.baseFee ?? 0;
   const latestComparison = data.history
     .filter((item) => item.officialTotal !== null && item.localTotal !== null)
@@ -44,7 +44,7 @@ export function OverviewPage() {
         <MetricCard
           title="今日实时费用"
           value={money(totals.todayLocal, currency, true)}
-          detail={`${data.today} · 本地估算`}
+          detail={`${date(data.today)} · 本地估算`}
         />
         <MetricCard
           title="历史官方累计"
@@ -58,15 +58,18 @@ export function OverviewPage() {
         <MetricCard
           title="本地累计费用"
           value={money(totals.localCumulative, currency, true)}
-          detail={`截至 ${data.today} · ${totals.localCumulative !== null ? '本地估算' : '用量待补全'}`}
+          detail={`截至 ${date(data.today)} · ${totals.localCumulative !== null ? '本地估算' : '用量待补全'}`}
         />
       </section>
       <BillingChart data={data} />
-      <section className="grid items-start gap-6 xl:grid-cols-2">
+      <section className="grid items-stretch gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle>服务费用</CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle>服务费用</CardTitle>
+                {hasEstimatedServiceCost && <Badge variant="outline">本地预估</Badge>}
+              </div>
               <Button variant="ghost" size="sm" asChild>
                 <NavLink to={BILLING_PATHS.services}>
                   全部明细
@@ -101,9 +104,6 @@ export function OverviewPage() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {money(item.currentCost ?? item.cost, currency, true)}
-                      {item.currentCost === null && (
-                        <div className="mt-1 text-xs text-muted-foreground">{estimateLabel}</div>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -116,11 +116,6 @@ export function OverviewPage() {
                 )}
               </TableBody>
             </Table>
-            {hasEstimatedServiceCost && (
-              <p className="mt-4 text-xs text-muted-foreground">
-                标注估算的金额按已有用量计算；用量不全可能低估，服务合计可能与官方校正总额不同。
-              </p>
-            )}
           </CardContent>
         </Card>
         <Card>
@@ -144,7 +139,7 @@ export function OverviewPage() {
                 {money(totals.difference, currency, true)}
               </span>
             </div>
-            <HistoryTable data={data} limit={5} />
+            <HistoryTable data={data} limit={7} />
           </CardContent>
         </Card>
       </section>

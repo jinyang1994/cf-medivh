@@ -198,7 +198,8 @@ export function BillingChart({
                               ? `${new Date(time)
                                   .toISOString()
                                   .slice(0, resolution === 'ten-minute' ? 16 : 10)
-                                  .replace('T', ' ')} UTC`
+                                  .replace('T', ' ')
+                                  .replaceAll('-', '/')} UTC`
                               : 'UTC'}
                           </div>
                           {resolution === 'ten-minute' && Number.isFinite(observed) && (

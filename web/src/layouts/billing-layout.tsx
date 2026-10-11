@@ -1,4 +1,5 @@
-import { Cloud, RefreshCw, AlertCircle, Clock3 } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { RefreshCw, AlertCircle, Clock3 } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -11,35 +12,39 @@ import type { BillingDashboardContext } from '@/types/billing';
 import { date, inclusiveEnd, timestamp } from '@/utils/format';
 
 export function BillingLayout() {
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const updateHeight = () => setHeaderHeight(header.getBoundingClientRect().height);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
   const { data, error, loading, refresh } = useDashboard();
   const { pathname } = useLocation();
   const collection = data?.collection;
   const cycle = data?.cycle;
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <header className="border-b">
+    <div className="flex min-h-svh flex-col bg-background text-foreground">
+      <header ref={headerRef} className="fixed inset-x-0 top-0 z-40 border-b bg-background">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <Cloud className="size-6" aria-hidden="true" />
-            <h1 className="text-xl font-semibold tracking-tight">Cloudflare 账单</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">UTC</span>
-            <BillingNotifications
-              cycleId={cycle?.id ?? null}
-              errors={collection?.errors ?? []}
-              warnings={collection?.warnings ?? []}
+            <img
+              src="/medivh.svg?v=2"
+              alt="麦迪文"
+              width={32}
+              height={32}
+              className="size-8 shrink-0"
             />
-            <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
-              <RefreshCw className={loading ? 'animate-spin' : ''} aria-hidden="true" />
-              刷新
-            </Button>
+            <h1 className="text-xl font-semibold tracking-tight">Cloudflare Medivh</h1>
           </div>
-        </div>
-      </header>
-      <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <nav aria-label="账单页面" className="flex gap-1">
+          <nav
+            aria-label="账单页面"
+            className="order-last flex w-full gap-1 lg:order-none lg:w-auto"
+          >
             {BILLING_NAVIGATION.map(([path, label]) => (
               <Button
                 key={path}
@@ -58,10 +63,25 @@ export function BillingLayout() {
               </Button>
             ))}
           </nav>
-          <div className="text-sm text-muted-foreground">
-            {cycle ? `${date(cycle.start)} — ${inclusiveEnd(cycle.end)}` : '账单周期待同步'}
+          <div className="ml-auto flex flex-wrap items-center gap-3">
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
+              {cycle ? `${date(cycle.start)} — ${inclusiveEnd(cycle.end)}` : '账单周期待同步'}
+              {' UTC'}
+            </span>
+            <BillingNotifications
+              cycleId={cycle?.id ?? null}
+              errors={collection?.errors ?? []}
+              warnings={collection?.warnings ?? []}
+            />
+            <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
+              <RefreshCw className={loading ? 'animate-spin' : ''} aria-hidden="true" />
+              刷新
+            </Button>
           </div>
         </div>
+      </header>
+      <div aria-hidden="true" className="shrink-0" style={{ height: headerHeight }} />
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
         {error && (
           <Alert variant="destructive" role="alert">
             <AlertCircle aria-hidden="true" />
@@ -81,7 +101,7 @@ export function BillingLayout() {
           </Card>
         )}
         {collection && (
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-xs text-muted-foreground">
+          <footer className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-2">
               {collection.running ? (
                 <RefreshCw className="size-3.5 animate-spin" aria-hidden="true" />

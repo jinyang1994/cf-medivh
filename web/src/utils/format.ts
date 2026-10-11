@@ -31,7 +31,7 @@ export function quantity(value: number) {
 }
 
 export function date(value: string | null | undefined) {
-  return value?.slice(0, 10) ?? '—';
+  return value?.slice(0, 10).replaceAll('-', '/') ?? '—';
 }
 
 export function shortDate(value: string) {
@@ -51,5 +51,5 @@ export function timestamp(value: string | null | undefined) {
 }
 
 export function inclusiveEnd(exclusiveEnd: string) {
-  return new Date(new Date(exclusiveEnd).getTime() - 86_400_000).toISOString().slice(0, 10);
+  return date(new Date(new Date(exclusiveEnd).getTime() - 86_400_000).toISOString());
 }

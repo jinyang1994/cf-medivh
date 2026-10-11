@@ -24,7 +24,10 @@ const COLORS = [
 ];
 
 function formatTime(value: string, daily = false) {
-  return value.slice(0, daily ? 10 : 16).replace('T', ' ');
+  return value
+    .slice(0, daily ? 10 : 16)
+    .replace('T', ' ')
+    .replaceAll('-', '/');
 }
 
 function formatUsage(value: number) {
@@ -110,7 +113,9 @@ function ResourceUsagePlot({
               minTickGap={32}
               tickFormatter={(value: number) => {
                 const iso = new Date(value).toISOString();
-                return daily ? iso.slice(5, 10) : `${iso.slice(5, 10)} ${iso.slice(11, 16)}`;
+                return daily
+                  ? iso.slice(5, 10).replace('-', '/')
+                  : `${iso.slice(5, 10).replace('-', '/')} ${iso.slice(11, 16)}`;
               }}
             />
             <YAxis

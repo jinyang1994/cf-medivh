@@ -1,8 +1,7 @@
 import { CheckCircle2, Clock3 } from 'lucide-react';
-import { BillingChart } from '@/components/billing/billing-chart';
 import { HistoryTable } from '@/components/billing/history-table';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
 
 export function HistoryPage() {
@@ -24,11 +23,7 @@ export function HistoryPage() {
           </Badge>
         )}
       </div>
-      <BillingChart data={data} defaultResolution="daily" />
       <Card>
-        <CardHeader>
-          <CardTitle>每日累计费用</CardTitle>
-        </CardHeader>
         <CardContent>
           <HistoryTable data={data} />
         </CardContent>

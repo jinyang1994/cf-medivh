@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  <title>麦迪文 · 提瑞斯法守护者</title>
+  <!-- Raven feathers sit below the armour, away from the face. -->
+  <path fill="#24272D" d="m24 56-18-6 8 15L2 62l12 14-9 1 18 11 14-7 11 12 11-12 14 7 18-11-9-1 12-14-12 3 8-15-18 6Z"/>
+  <path stroke="#50535B" stroke-width="2" d="m15 72 13 7m-7-9 12 6m48-4-13 7m7-9-12 6"/>
+  <!-- A deep burgundy hood with a restrained bronze edge. -->
+  <path fill="#533E46" stroke="#28272D" stroke-width="2" d="M48 5C36 11 29 27 23 49l10 10 15 9 17-9 8-10C65 36 65 17 48 5Z"/>
+  <path fill="#22252C" d="m48 23-14 14-5 14 10 10 9 6 14-9 6-8-9-17Z"/>
+  <path stroke="#B8A57B" stroke-linejoin="round" stroke-width="2.5" d="m29 51 5-14 14-14 11 10 9 17"/>
+  <path fill="#75616A" d="M48 8C39 17 34 27 31 37l14-16 9-1Z"/>
+  <!-- Narrow human face, a straight nose, and a short tapered beard. -->
+  <path fill="#B8BAB7" d="m43 33 10-1 6 9-4 13-7 6-8-8-2-11Z"/>
+  <path fill="#858B8C" d="m43 33-5 8 2 11 8 8-3-14 3-11Z"/>
+  <path fill="#292C32" d="m38 45 6 6 4-2 4 1 6-6-2 13-8 8-8-8Z"/>
+  <path stroke="#51565E" stroke-linecap="round" stroke-width="1.5" d="m44 54 2 6m6-7-2 8"/>
+  <path stroke="#34373D" stroke-linecap="round" stroke-width="2" d="m40 39 5 1m6-1 5-1"/>
+  <path stroke="#A69ADA" stroke-linecap="round" stroke-width="2" d="M41 41h3m8-1h3"/>
+  <path stroke="#DFDED3" stroke-linejoin="round" stroke-width="1.5" d="m49 39-2 7h3"/>
+  <!-- Broad metal pauldrons frame the hood, rather than forming a mane. -->
+  <path fill="#535E65" stroke="#B8A57B" stroke-linejoin="round" stroke-width="2.5" d="M10 60q11-9 23-2l10 10-5 11-30-9Zm76 0q-11-9-23-2L53 68l5 11 30-9Z"/>
+  <path stroke="#B8A57B" stroke-linecap="round" stroke-width="2" d="M16 64q8-5 14 1l4 8m46-9q-8-5-14 1l-4 8"/>
+  <path fill="#C7B68D" d="m10 64-4 8 9 1Zm76 0 4 8-9 1Z"/>
+  <path fill="#252830" stroke="#B8A57B" stroke-width="2" d="m48 65 8 12-8 14-8-14Z"/>
+  <path fill="#755060" d="m48 71 4 6-4 8-4-8Z"/>
+</svg>

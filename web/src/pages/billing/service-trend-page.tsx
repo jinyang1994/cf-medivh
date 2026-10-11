@@ -1,9 +1,14 @@
-import { ArrowLeft } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { ServiceTrendPanel } from '@/components/billing/service-trend-panel';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BILLING_PATHS } from '@/constants/billing-navigation';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
 import { useServiceTrend } from '@/hooks/use-service-trend';
 
@@ -30,12 +35,36 @@ export function ServiceTrendPage() {
             </p>
           )}
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to={BILLING_PATHS.services}>
-            <ArrowLeft aria-hidden="true" />
-            返回服务明细
-          </Link>
-        </Button>
+        {valid && (
+          <div className="flex max-w-full items-center gap-3">
+            <label htmlFor="trend-meter" className="shrink-0 text-sm font-medium">
+              计费项
+            </label>
+            <Select
+              value={meter ?? '__all_meters__'}
+              onValueChange={(value) => {
+                const next = new URLSearchParams(params);
+                if (value === '__all_meters__') next.delete('meter');
+                else next.set('meter', value);
+                setParams(next);
+              }}
+            >
+              <SelectTrigger id="trend-meter" className="min-w-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" align="end">
+                <SelectGroup>
+                  <SelectItem value="__all_meters__">全部计费项</SelectItem>
+                  {meters.map((item) => (
+                    <SelectItem key={item.key} value={item.key}>
+                      {item.name} · {item.unit}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       {!valid ? (
         <Card>
@@ -48,41 +77,16 @@ export function ServiceTrendPage() {
           </CardContent>
         </Card>
       ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-3">
-            <label htmlFor="trend-meter" className="text-sm font-medium">
-              计费项
-            </label>
-            <select
-              id="trend-meter"
-              value={meter ?? ''}
-              onChange={(event) => {
-                const next = new URLSearchParams(params);
-                if (event.target.value) next.set('meter', event.target.value);
-                else next.delete('meter');
-                setParams(next);
-              }}
-              className="h-9 max-w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            >
-              <option value="">全部计费项</option>
-              {meters.map((item) => (
-                <option key={item.key} value={item.key}>
-                  {item.name} · {item.unit}
-                </option>
-              ))}
-            </select>
-          </div>
-          <ServiceTrendPanel
-            key={JSON.stringify([dashboard.cycle?.id, dashboard.today, service, meter])}
-            service={service}
-            meter={meter}
-            summary={selected ?? null}
-            data={data}
-            error={error}
-            loading={loading}
-            refresh={refresh}
-          />
-        </>
+        <ServiceTrendPanel
+          key={JSON.stringify([dashboard.cycle?.id, dashboard.today, service, meter])}
+          service={service}
+          meter={meter}
+          summary={selected ?? null}
+          data={data}
+          error={error}
+          loading={loading}
+          refresh={refresh}
+        />
       )}
     </>
   );
