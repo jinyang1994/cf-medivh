@@ -23,7 +23,7 @@ export function BillingLayout() {
     observer.observe(header);
     return () => observer.disconnect();
   }, []);
-  const { data, error, loading, refresh } = useDashboard();
+  const { data, error, loading } = useDashboard();
   const { pathname } = useLocation();
   const collection = data?.collection;
   const cycle = data?.cycle;
@@ -83,10 +83,6 @@ export function BillingLayout() {
               errors={collection?.errors ?? []}
               warnings={collection?.warnings ?? []}
             />
-            <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
-              <RefreshCw className={loading ? 'animate-spin' : ''} aria-hidden="true" />
-              刷新
-            </Button>
           </div>
         </div>
       </header>
