@@ -279,7 +279,7 @@ export function ResourceUsageTrendContent({
         <p className="rounded-md bg-muted/50 px-4 py-6 text-sm leading-relaxed text-muted-foreground">
           {data.unavailableReason}
         </p>
-      ) : data && !cost && data.resources.length === 0 ? (
+      ) : data && !('currency' in data) && data.resources.length === 0 && data.total == null ? (
         <p className="py-12 text-center text-sm text-muted-foreground">此时段暂无资源用量记录。</p>
       ) : data ? (
         <ResourceUsagePlot

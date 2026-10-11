@@ -182,7 +182,7 @@ test('resource trends read SQLite only and validate selections without upstream 
           service: 'Durable Objects',
           name: '计算时长',
           unit: 'GB-seconds',
-          quantity: 12,
+          quantity: 24,
           pricing: { currency: 'USD', unitPrice: 1, unitSize: 1, includedQuantity: 0 },
         },
       ],
@@ -229,6 +229,8 @@ test('resource trends read SQLite only and validate selections without upstream 
   assert.equal(calls, 0);
   const daily = await (await request(path + '&resolution=daily')).json();
   assert.equal(daily.resources[0].total, 12);
+  assert.equal(daily.total, 24);
+  assert.equal(daily.points[0].total, 24);
   assert.equal(calls, 0);
   for (const query of [
     '',

@@ -33,9 +33,7 @@ export function resourceTrendSeries(data: ResourceUsageTrend | ResourceCostTrend
       key: 'total',
       toggleKey: JSON.stringify(['total']),
       name: '汇总',
-      total: cost
-        ? latestValue(data.points.map((point) => point.total))
-        : data.resources.reduce((sum, resource) => sum + resource.total, 0),
+      total: cost ? latestValue(data.points.map((point) => point.total)) : (data.total ?? null),
       kind: 'total',
     },
     ...resources,
@@ -76,11 +74,7 @@ export function resourceTrendSeries(data: ResourceUsageTrend | ResourceCostTrend
       values.unattributed = point.unattributedCost;
       values.official = point.officialCost;
     } else {
-      const quantities = resources.map((resource) => values[resource.key]);
-      values.total =
-        quantities.length > 0 && quantities.every((value) => value != null)
-          ? quantities.reduce<number>((sum, value) => sum + value!, 0)
-          : null;
+      values.total = point.total ?? null;
     }
     return { timestamp: point.timestamp, time: Date.parse(point.timestamp), values };
   });

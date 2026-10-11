@@ -137,7 +137,10 @@ export interface ResourceUsageTrend {
   fetchedAt: string;
   resources: { id: string; name: string; total: number }[];
   /** Quantities within each interval, never cumulative charges or allocated account fees. */
-  points: { timestamp: string; quantities: Record<string, number | null> }[];
+  points: { timestamp: string; quantities: Record<string, number | null>; total?: number | null }[];
+  /** Service meter total for the selected interval; populated by the read API. */
+  total?: number | null;
+  totalComplete?: boolean;
   /** Independently completed API windows, persisted for incremental recovery. */
   coverage?: { start: string; end: string; complete: boolean }[];
   warnings: string[];

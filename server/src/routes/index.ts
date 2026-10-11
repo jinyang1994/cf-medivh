@@ -1,6 +1,7 @@
 import type { Middleware } from 'koa';
 import { dashboard } from '@/services/dashboard';
 import { serviceTrend } from '@/services/service-trend';
+import { withMeterUsage } from '@/services/resource-usage-trend';
 import { resourceCostTrend } from '@/services/resource-cost-trend';
 import type { Store } from '@/repositories/billing-store';
 import type { Collector } from '@/services/collector';
@@ -82,22 +83,27 @@ export function apiRoutes(store: Store, collector: Collector): Middleware {
           : new Date(
               Math.max(Date.parse(cycle.start), Date.parse(end) - 48 * 60 * 60 * 1000),
             ).toISOString();
-      ctx.body = store.resourceUsage.read(cycle, service, meter, resolution, now) ?? {
-        service,
-        meterKey: meter,
-        unit: summary.unit,
-        resolution,
-        start,
-        end,
-        fetchedAt: '',
-        resources: [],
-        points: [],
-        warnings: [],
-        unavailableReason:
-          meter === '__base_fee'
-            ? '固定订阅费用没有具体资源用量。'
-            : '资源明细等待后台采集，页面仅读取已保存的数据。',
-      };
+      ctx.body = withMeterUsage(
+        store,
+        cycle,
+        store.resourceUsage.read(cycle, service, meter, resolution, now) ?? {
+          service,
+          meterKey: meter,
+          unit: summary.unit,
+          resolution,
+          start,
+          end,
+          fetchedAt: '',
+          resources: [],
+          points: [],
+          warnings: [],
+          unavailableReason:
+            meter === '__base_fee'
+              ? '固定订阅费用没有具体资源用量。'
+              : '资源明细等待后台采集，页面仅读取已保存的数据。',
+        },
+        now,
+      );
       return;
     }
     if (ctx.path === '/api/service-trend' && ctx.method === 'GET') {
