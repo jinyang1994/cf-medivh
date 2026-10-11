@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { BILLING_PATHS, serviceTrendPath } from '@/constants/billing-navigation';
 import { useBillingDashboard } from '@/hooks/use-billing-dashboard';
-import { date, money, shortDate } from '@/utils/format';
+import { cycleProgress, date, inclusiveEnd, money, shortDate } from '@/utils/format';
 import { serviceTotals } from '@/utils/service-totals';
 
 export function OverviewPage() {
@@ -25,6 +25,7 @@ export function OverviewPage() {
   const services = serviceTotals(data.services);
   const hasEstimatedServiceCost = services.some((item) => item.currentCost === null);
   const baseFee = data.cycle?.baseFee ?? 0;
+  const progress = cycleProgress(data.cycle, data.today);
   const latestComparison = data.history
     .filter((item) => item.officialTotal !== null && item.localTotal !== null)
     .at(-1);
@@ -32,13 +33,24 @@ export function OverviewPage() {
     <>
       <section aria-label="周期费用" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          title="当前周期费用"
-          value={money(totals.current, currency, true)}
+          title="账期天数"
+          value={
+            progress ? (
+              <span aria-label={`当前账期第 ${progress.current} 天，共 ${progress.total} 天`}>
+                {progress.current}
+                <span className="ml-1 text-xl font-normal text-muted-foreground">
+                  /{progress.total}
+                </span>
+              </span>
+            ) : (
+              '—'
+            )
+          }
           main
           detail={
-            totals.current === null
-              ? '等待官方账单或完整用量'
-              : `历史官方 + 今日实时${baseFee > 0 ? ` · 含订阅 ${money(baseFee, currency)}` : ''}`
+            data.cycle
+              ? `${date(data.cycle.start)} — ${inclusiveEnd(data.cycle.end)} UTC`
+              : '等待账期信息'
           }
         />
         <MetricCard

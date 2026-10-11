@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function MetricCard({
@@ -7,7 +8,7 @@ export function MetricCard({
   main = false,
 }: {
   title: string;
-  value: string;
+  value: ReactNode;
   detail: string;
   main?: boolean;
 }) {

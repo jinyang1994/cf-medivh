@@ -53,3 +53,12 @@ export function timestamp(value: string | null | undefined) {
 export function inclusiveEnd(exclusiveEnd: string) {
   return date(new Date(new Date(exclusiveEnd).getTime() - 86_400_000).toISOString());
 }
+
+export function cycleProgress(cycle: { start: string; end: string } | null, today: string) {
+  if (!cycle) return null;
+  const start = Date.parse(cycle.start);
+  const total = Math.round((Date.parse(cycle.end) - start) / 86_400_000);
+  const current = Math.floor((Date.parse(today) - start) / 86_400_000) + 1;
+  if (!Number.isFinite(total) || !Number.isFinite(current) || total <= 0) return null;
+  return { current: Math.max(0, Math.min(current, total)), total };
+}
