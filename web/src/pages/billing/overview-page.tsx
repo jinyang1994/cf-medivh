@@ -24,7 +24,6 @@ export function OverviewPage() {
   const { totals, currency } = data;
   const services = serviceTotals(data.services);
   const hasEstimatedServiceCost = services.some((item) => item.currentCost === null);
-  const baseFee = data.cycle?.baseFee ?? 0;
   const progress = cycleProgress(data.cycle, data.today);
   const latestComparison = data.history
     .filter((item) => item.officialTotal !== null && item.localTotal !== null)
@@ -63,7 +62,7 @@ export function OverviewPage() {
           value={money(totals.officialHistorical, currency, true)}
           detail={
             totals.officialThrough
-              ? `截至 ${date(totals.officialThrough)}${baseFee > 0 && totals.officialHistorical !== null ? ` · 用量 ${money(totals.officialHistorical - baseFee, currency, true)} + 订阅 ${money(baseFee, currency)}` : ''}`
+              ? `截至 ${date(totals.officialThrough)}`
               : '等待官方汇总'
           }
         />
