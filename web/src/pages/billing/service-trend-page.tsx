@@ -24,16 +24,11 @@ export function ServiceTrendPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">
             {valid ? `${service} · ${selected?.name ?? '服务费用'}` : '服务趋势'}
           </h2>
-          {valid && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              查看具体资源用量与当前账期累计变化 · 时间均为 UTC
-            </p>
-          )}
         </div>
         {valid && (
           <div className="flex max-w-full items-center gap-3">

@@ -125,7 +125,10 @@ export function BillingChart({
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>周期累计费用</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>周期累计费用</CardTitle>
+            <Badge variant="outline">{data.currency}</Badge>
+          </div>
           <div className="flex items-center gap-2">
             <div role="group" aria-label="图表粒度" className="flex gap-1">
               <Button
@@ -145,7 +148,6 @@ export function BillingChart({
                 每日
               </Button>
             </div>
-            <Badge variant="outline">{data.currency}</Badge>
           </div>
         </div>
       </CardHeader>

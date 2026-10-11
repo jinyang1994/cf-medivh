@@ -9,7 +9,7 @@ import { BillingNotifications } from '@/components/billing/billing-notifications
 import { BILLING_NAVIGATION, BILLING_PATHS } from '@/constants/billing-navigation';
 import { useDashboard } from '@/hooks/use-dashboard';
 import type { BillingDashboardContext } from '@/types/billing';
-import { date, inclusiveEnd, timestamp } from '@/utils/format';
+import { timestamp } from '@/utils/format';
 
 export function BillingLayout() {
   const headerRef = useRef<HTMLElement>(null);
@@ -64,10 +64,6 @@ export function BillingLayout() {
             ))}
           </nav>
           <div className="ml-auto flex flex-wrap items-center gap-3">
-            <span className="whitespace-nowrap text-sm text-muted-foreground">
-              {cycle ? `${date(cycle.start)} — ${inclusiveEnd(cycle.end)}` : '账单周期待同步'}
-              {' UTC'}
-            </span>
             <BillingNotifications
               cycleId={cycle?.id ?? null}
               errors={collection?.errors ?? []}

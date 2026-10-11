@@ -105,7 +105,7 @@ export function OverviewPage() {
                       <NavLink
                         to={serviceTrendPath(item.service)}
                         aria-label={`查看 ${item.service} 费用趋势`}
-                        className="inline-flex rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                        className="inline-flex rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {item.service}
                       </NavLink>
