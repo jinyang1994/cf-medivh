@@ -32,6 +32,36 @@ const usage = (date: string, quantity = 10): UsageReport => ({
   ],
 });
 
+test('daily reconciliation difference uses consecutive raw comparisons and leaves gaps unknown', (t) => {
+  const store = new Store(':memory:');
+  t.after(() => store.close());
+  store.saveCycle(cycle);
+  for (let day = 1; day <= 4; day++) {
+    const date = `2026-10-0${day}`;
+    store.saveUsage(cycle, usage(date), true);
+    if (day === 3) continue;
+    store.saveBill(
+      cycle,
+      { through: date, amount: 5 + day - day * 0.0000004, currency: 'USD' },
+      `${date}T23:59:59Z`,
+      5 + day,
+      true,
+      {},
+    );
+  }
+  const view = dashboard(
+    store,
+    new Collector(store, {} as CloudflareProvider),
+    new Date('2026-10-05T00:00:00Z'),
+  );
+  assert.equal(view.history[0]!.dailyDifference, 0.0000004);
+  assert.equal(view.history[1]!.difference, 0.000001);
+  // Subtract before rounding: subtracting displayed differences would incorrectly yield 1e-6.
+  assert.equal(view.history[1]!.dailyDifference, 0.0000004);
+  assert.equal(view.history[2]!.dailyDifference, null);
+  assert.equal(view.history[3]!.dailyDifference, null);
+});
+
 test('retains snapshots while replacing cumulative day quantities instead of adding them', () => {
   const store = new Store(':memory:');
   store.saveCycle(cycle);

@@ -51,3 +51,5 @@ Workers Analytics 最近几分钟可能有聚合延迟，因此午夜还需要�
 R2、D1、KV 的指标可查询最近 31 天。超过保留期且没有本地记录时，本地比较应标为不完整，不把空返回解释成零用量。[R2 Analytics](https://developers.cloudflare.com/r2/platform/metrics-analytics/)、[D1 Analytics](https://developers.cloudflare.com/d1/observability/metrics-analytics/)、[KV Analytics](https://developers.cloudflare.com/kv/observability/metrics-analytics/)
 
 官方账单按不同产品可能存在不同延迟，也可能省略无活动日期。本地重试应区分目标日期尚未就绪、接口失败和已确认的零费用。官方和本地保留原始数据，不将 Analytics 的估算误差隐藏为已经精确对账。
+
+Containers 核查（2026-10-12）：内存使用 `allocatedMemory / 2**30`，磁盘使用 `allocatedDisk / 1e9`，单位及价格与官方文档一致。9 月 18 日至 10 月 7 日保存的用量显示 Analytics 比 Billable Usage 的 `ConsumedQuantity` 略高；10 月 12 日再次查询官方账单，这些历史用量未发生修订。10 月 7 日内存日用量为 2079.992964041 / 2077 GiB-seconds，磁盘为 8319.971856164 / 8310 GB-seconds（本地 / 官方）。官方文档规定按 10ms 计费，但 Analytics 提供的采样汇总不足以精确还原逐次取整。按采样粒度模拟取整能复现部分抽查值，9 月 19 日磁盘仍不能完全解释，因此不将这一推测实现为通用修正系数或取整算法。保持独立估算，在每日核对区分累计差值与相邻两天累计差值之差，并在每日计费项中展示原始官方日用量及费用；缺失记录留空。参考：[Containers 计费](https://developers.cloudflare.com/containers/platform/pricing/)、[Containers GraphQL 用量](https://developers.cloudflare.com/analytics/graphql-api/tutorials/querying-container-metrics/)。

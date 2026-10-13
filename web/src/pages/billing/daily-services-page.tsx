@@ -112,7 +112,7 @@ export function DailyServicesPage() {
                     <Trans>服务 / 计费项</Trans>
                   </TableHead>
                   <TableHead className="text-right">
-                    <Trans>当日用量</Trans>
+                    <Trans>当日用量核对</Trans>
                   </TableHead>
                   <TableHead className="text-right">
                     <Trans>单价</Trans>
@@ -124,7 +124,7 @@ export function DailyServicesPage() {
                     <Trans>当日超额用量</Trans>
                   </TableHead>
                   <TableHead className="text-right">
-                    <Trans>当日费用</Trans>
+                    <Trans>当日费用核对</Trans>
                   </TableHead>
                 </TableRow>
               </TableHeader>

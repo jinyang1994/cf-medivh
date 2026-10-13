@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Store } from '@/repositories/billing-store';
 import { dailyServices } from '@/services/daily-services';
+import { meterDefinition } from '@/services/pricing';
 import type { BillingCycle, UsageMeter } from '@/types';
 
 const cycle: BillingCycle = {
@@ -25,6 +26,76 @@ const meter = (quantity: number, daily = false): UsageMeter => ({
     includedQuantity: 10,
     allowancePeriod: daily ? 'day' : 'cycle',
   },
+});
+
+test('compares raw daily billable quantities without replacing local analytics or treating missing rows as zero', (t) => {
+  const store = new Store(':memory:');
+  t.after(() => store.close());
+  store.saveCycle(cycle);
+  const localMemory = 2079.992964041;
+  store.saveUsage(
+    cycle,
+    {
+      date: cycle.start,
+      observedAt: '2026-10-02T00:00:00Z',
+      complete: true,
+      meters: [
+        { ...meterDefinition('cloudchamber_memory_usage')!, quantity: localMemory },
+        { ...meterDefinition('cloudchamber_disk_usage')!, quantity: 8319.971856164 },
+      ],
+    },
+    true,
+  );
+  const row = {
+    ServiceName: 'Container Memory, per GiB-Second (First 25 GiB-hours included)',
+    BillingPeriodStart: `${cycle.start}T00:00:00Z`,
+    ChargePeriodStart: `${cycle.start}T00:00:00Z`,
+    ChargePeriodEnd: '2026-10-02T00:00:00Z',
+    BillingCurrency: 'USD',
+    ConsumedQuantity: 2077,
+    ContractedCost: 0,
+    CumulatedPricingQuantity: 999999,
+  };
+  store.saveBill(
+    cycle,
+    {
+      through: cycle.start,
+      amount: 5,
+      currency: 'USD',
+      serviceCosts: { __base_fee: 5 },
+      raw: {
+        records: [
+          row,
+          { ...row, ChargePeriodStart: '2026-09-30T00:00:00Z', ConsumedQuantity: 999 },
+          { ...row, BillingPeriodStart: '2026-09-01T00:00:00Z', ConsumedQuantity: 999 },
+        ],
+      },
+    },
+    now.toISOString(),
+    5,
+    true,
+    {},
+  );
+  const before = store.db.prepare('SELECT total_changes() AS n').get();
+  const result = dailyServices(store, cycle.start, now)!;
+  const memory = result.services.find((s) => s.key === 'cloudchamber_memory_usage')!;
+  assert.equal(memory.quantity, localMemory);
+  assert.equal(memory.officialQuantity, 2077);
+  assert.equal(memory.quantityDifference, localMemory - 2077);
+  assert.equal(memory.officialCost, 0);
+  assert.equal(memory.costDifference, 0);
+  assert.equal(
+    result.services.find((s) => s.key === 'cloudchamber_disk_usage')!.officialQuantity,
+    null,
+  );
+  assert.equal(result.services.find((s) => s.key === '__base_fee')!.officialCost, 5);
+  assert.deepEqual(store.db.prepare('SELECT total_changes() AS n').get(), before);
+  assert.equal(
+    dailyServices(store, cycle.start, new Date('2026-10-01T23:59:00Z'))!.services.find(
+      (s) => s.key === '__base_fee',
+    )!.officialCost,
+    null,
+  );
 });
 function save(store: Store, date: string, amount: number, complete = true) {
   store.saveUsage(

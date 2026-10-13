@@ -18,7 +18,7 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
 
   const navigate = useNavigate();
   const rows = [...data.history]
-    .filter((item) => item.date < data.today)
+    .filter((item) => item.date <= data.today)
     .reverse()
     .slice(0, limit);
   return (
@@ -29,13 +29,19 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
             <Trans>截至日期</Trans>
           </TableHead>
           <TableHead className="text-right">
+            <Trans>每日费用</Trans>
+          </TableHead>
+          <TableHead className="text-right">
             <Trans>本地累计</Trans>
           </TableHead>
           <TableHead className="text-right">
             <Trans>官方累计</Trans>
           </TableHead>
           <TableHead className="text-right">
-            <Trans>差值</Trans>
+            <Trans>累计差值</Trans>
+          </TableHead>
+          <TableHead className="text-right">
+            <Trans>当日新增差值</Trans>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -57,6 +63,14 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
               >
                 {date(item.date)}
               </NavLink>
+              {item.date === data.today && (
+                <Badge className="ml-2" variant="secondary">
+                  <Trans>今日</Trans>
+                </Badge>
+              )}
+            </TableCell>
+            <TableCell className="text-right tabular-nums">
+              {money(item.dailyCost, data.currency, true)}
             </TableCell>
             <TableCell className="text-right tabular-nums">
               {money(item.localTotal, data.currency, true)}
@@ -73,11 +87,14 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
             <TableCell className="text-right tabular-nums">
               {money(item.difference, data.currency, true)}
             </TableCell>
+            <TableCell className="text-right tabular-nums">
+              {money(item.dailyDifference, data.currency, true)}
+            </TableCell>
           </TableRow>
         ))}
         {rows.length === 0 && (
           <TableRow>
-            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
               <Trans>暂无历史账单</Trans>
             </TableCell>
           </TableRow>

@@ -1,5 +1,5 @@
 import uniq from 'lodash/uniq.js';
-import { calculateDaily, money, reconcileTotals } from '@/services/calculation';
+import { auditDifference, calculateDaily, money, reconcileTotals } from '@/services/calculation';
 import { addDays, cycleContains, datesBetween, utcDate, utcDayStart } from '@/utils/dates';
 import { Collector } from '@/services/collector';
 import { Store } from '@/repositories/billing-store';
@@ -107,11 +107,38 @@ export function dashboard(store: Store, collector: Collector, now = new Date()):
       : localAtDate.complete
         ? localAtDate.total
         : null;
+    const previous = bills.get(addDays(date, -1));
+    const previousLocal = dailyTotals.get(addDays(date, -1));
+    const officialDaily =
+      date < today && official && (date === cycle.start || previous)
+        ? auditDifference(official.bill.amount - (previous?.bill.amount ?? 0))
+        : null;
+    const estimatedDaily =
+      localAtDate.complete && (date === cycle.start || previousLocal?.complete)
+        ? money(localAtDate.total - (previousLocal?.total ?? 0))
+        : null;
+    const previousDifference =
+      date === cycle.start
+        ? 0
+        : previous?.localComplete && previous.localTotal !== null
+          ? previous.localTotal - previous.bill.amount
+          : null;
     return {
       date,
+      dailyCost: officialDaily ?? estimatedDaily,
+      dailyCostSource:
+        officialDaily !== null
+          ? ('official' as const)
+          : estimatedDaily !== null
+            ? ('estimate' as const)
+            : null,
       officialTotal: official?.bill.amount ?? null,
       localTotal,
       difference: official && localTotal !== null ? money(localTotal - official.bill.amount) : null,
+      dailyDifference:
+        official?.localComplete && localTotal !== null && previousDifference !== null
+          ? auditDifference(localTotal - official.bill.amount - previousDifference)
+          : null,
       localComplete: official?.localComplete ?? localAtDate.complete,
       fetchedAt: official?.fetchedAt ?? null,
     };

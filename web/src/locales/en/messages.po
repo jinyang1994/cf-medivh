@@ -79,6 +79,10 @@ msgstr "Cloudflare build usage has no per-Worker breakdown; only service totals 
 msgid "Cloudflare 的此项用量统计没有提供具体资源维度，暂时只能查看服务汇总。"
 msgstr "Cloudflare provides no resource breakdown for this meter; only service totals are available."
 
+#: src/pages/billing/history-page.tsx
+#~ msgid "Containers 的统计用量可能受采样和计费精度影响。汇总数据不能精确还原每次计费取整，估算偏差会随用量累积。"
+#~ msgstr "Containers analytics may differ because of sampling and billing precision. Aggregate data cannot exactly reproduce rounding of individual billing events, so estimation differences can accumulate with usage."
+
 #: src/utils/display-text.ts
 msgid "CPU 时间"
 msgstr "CPU time"
@@ -123,6 +127,11 @@ msgstr "X profile"
 msgid "下次采集"
 msgstr "Next collection"
 
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "主数值为本地独立估算，差值为本地减去官方。官方用量取自当日账单原始记录；缺少记录时显示“—”，不当作零。"
+#~ msgstr "The main values are independent local estimates; differences are local minus official. Official usage comes from daily billing records. Missing records appear as “—”, not zero."
+
+#: src/components/billing/history-table.tsx
 #: src/pages/billing/overview-page.tsx
 msgid "今日"
 msgstr "Today"
@@ -353,6 +362,10 @@ msgstr "Official data synced"
 msgid "官方汇总"
 msgstr "Official total"
 
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "官方用量"
+#~ msgstr "Official usage"
+
 #: src/components/billing/billing-chart.tsx
 #: src/components/billing/history-table.tsx
 msgid "官方累计"
@@ -365,6 +378,10 @@ msgstr "Official cumulative cost"
 #: src/components/billing/billing-chart.tsx
 msgid "官方账单 + 预测"
 msgstr "Official bill + forecast"
+
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "官方费用"
+#~ msgstr "Official cost"
 
 #: src/utils/display-text.ts
 msgid "小时"
@@ -383,8 +400,12 @@ msgid "尚未采集用量"
 msgstr "No usage collected yet"
 
 #: src/components/billing/history-table.tsx
-msgid "差值"
-msgstr "Difference"
+#~ msgid "差值"
+#~ msgstr "Difference"
+
+#: src/pages/billing/history-page.tsx
+#~ msgid "差值为本地独立估算减去官方账单；累计差值包含之前每天的偏差，当日新增差值为相邻两天累计差值之差。点击日期查看各计费项的用量和费用差异。"
+#~ msgstr "Differences are independent local estimates minus official bills. The cumulative difference includes earlier days; the daily change compares consecutive days. Select a date to compare usage and costs for each meter."
 
 #: src/components/billing/notification-language.tsx
 #~ msgid "已保存，下次发送时生效。"
@@ -414,12 +435,15 @@ msgstr "Day {value0} of {value1} in this billing cycle"
 msgid "当前费用"
 msgstr "Current cost"
 
+#: src/components/billing/history-table.tsx
+msgid "当日新增差值"
+msgstr "Daily change in difference"
+
 #: src/utils/display-text.ts
 msgid "当日服务明细加载失败"
 msgstr "Failed to load daily service details"
 
 #: src/pages/billing/daily-meter-trend-page.tsx
-#: src/pages/billing/daily-services-page.tsx
 msgid "当日用量"
 msgstr "Daily usage"
 
@@ -427,13 +451,21 @@ msgstr "Daily usage"
 msgid "当日用量待采集"
 msgstr "Daily usage has not been collected yet"
 
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日用量核对"
+msgstr "Daily usage comparison"
+
 #: src/pages/billing/daily-meter-trend-page.tsx
 msgid "当日累计费用"
 msgstr "Daily cumulative cost"
 
 #: src/pages/billing/daily-services-page.tsx
-msgid "当日费用"
-msgstr "Daily cost"
+#~ msgid "当日费用"
+#~ msgstr "Daily cost"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日费用核对"
+msgstr "Daily cost comparison"
 
 #: src/pages/billing/daily-services-page.tsx
 msgid "当日超额用量"
@@ -683,6 +715,14 @@ msgstr "Daily details"
 msgid "每日核对"
 msgstr "Daily reconciliation"
 
+#: src/components/billing/history-table.tsx
+msgid "每日费用"
+msgstr "Daily cost"
+
+#: src/pages/billing/history-page.tsx
+#~ msgid "每日费用优先使用相邻两天的官方累计差额；官方数据不足时使用本地估算。今日费用为截至最近采集时的估算，日期按 UTC 计费日展示。"
+#~ msgstr "Daily costs use the change between consecutive official totals when available, otherwise local estimates. Today shows the estimate as of the latest collection. Dates follow UTC billing days."
+
 #: src/utils/resource-trend-series.ts
 msgid "汇总"
 msgstr "Total"
@@ -716,6 +756,10 @@ msgstr "Usage estimate"
 msgid "用量图表"
 msgstr "Usage chart"
 
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "用量差值"
+#~ msgstr "Usage difference"
+
 #: src/pages/billing/overview-page.tsx
 msgid "用量待补全"
 msgstr "Usage incomplete"
@@ -743,6 +787,10 @@ msgstr "Waiting for billing cycle information"
 #: src/pages/settings/settings-page.tsx
 msgid "签名密钥"
 msgstr "Signing secret"
+
+#: src/components/billing/history-table.tsx
+msgid "累计差值"
+msgstr "Cumulative difference"
 
 #: src/components/billing/service-trend-chart.tsx
 msgid "累计用量"
@@ -858,6 +906,10 @@ msgstr "Cost"
 #: src/components/billing/service-trend-panel.tsx
 msgid "费用图表"
 msgstr "Cost chart"
+
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "费用差值"
+#~ msgstr "Cost difference"
 
 #: src/utils/display-text.ts
 msgid "资源明细仅有小时采样；10 分钟汇总使用已保存的采集快照。"

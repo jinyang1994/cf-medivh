@@ -83,6 +83,10 @@ export interface Reconciliation {
   officialTotal: number | null;
   localTotal: number | null;
   difference: number | null;
+  /** Change in cumulative difference from the immediately preceding UTC day. */
+  dailyDifference?: number | null;
+  dailyCost?: number | null;
+  dailyCostSource?: 'official' | 'estimate' | null;
   localComplete: boolean;
   fetchedAt: string | null;
 }
@@ -265,6 +269,10 @@ export interface DailyServices {
     pricing: MeterPricing;
     quantity: number | null;
     cost: number | null;
+    officialQuantity: number | null;
+    officialCost: number | null;
+    quantityDifference: number | null;
+    costDifference: number | null;
     /** Selected day usage above the remaining allowance, before billing-unit rounding. */
     overageQuantity: number | null;
     /** Actual usage in the allowance window, including usage above the free limit. */

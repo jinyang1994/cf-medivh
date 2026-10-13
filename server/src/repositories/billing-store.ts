@@ -503,6 +503,12 @@ export class Store {
       throw error;
     }
   }
+  billAt(cycleId: string, date: string): OfficialBill | null {
+    const row = this.db
+      .prepare('SELECT payload FROM reconciliations WHERE cycle_id=? AND through_date=?')
+      .get(cycleId, date) as { payload: string } | undefined;
+    return row ? (JSON.parse(row.payload) as OfficialBill) : null;
+  }
   bills(cycleId: string): Map<string, StoredBill> {
     return new Map(
       (

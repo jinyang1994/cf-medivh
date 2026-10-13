@@ -79,6 +79,10 @@ msgstr "Cloudflare 的构建用量统计没有提供按 Worker 拆分的维度�
 msgid "Cloudflare 的此项用量统计没有提供具体资源维度，暂时只能查看服务汇总。"
 msgstr "Cloudflare 的此项用量统计没有提供具体资源维度，暂时只能查看服务汇总。"
 
+#: src/pages/billing/history-page.tsx
+#~ msgid "Containers 的统计用量可能受采样和计费精度影响。汇总数据不能精确还原每次计费取整，估算偏差会随用量累积。"
+#~ msgstr "Containers 的统计用量可能受采样和计费精度影响。汇总数据不能精确还原每次计费取整，估算偏差会随用量累积。"
+
 #: src/utils/display-text.ts
 msgid "CPU 时间"
 msgstr "CPU 时间"
@@ -123,6 +127,11 @@ msgstr "X 主页"
 msgid "下次采集"
 msgstr "下次采集"
 
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "主数值为本地独立估算，差值为本地减去官方。官方用量取自当日账单原始记录；缺少记录时显示“—”，不当作零。"
+#~ msgstr "主数值为本地独立估算，差值为本地减去官方。官方用量取自当日账单原始记录；缺少记录时显示“—”，不当作零。"
+
+#: src/components/billing/history-table.tsx
 #: src/pages/billing/overview-page.tsx
 msgid "今日"
 msgstr "今日"
@@ -353,6 +362,10 @@ msgstr "官方已同步"
 msgid "官方汇总"
 msgstr "官方汇总"
 
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "官方用量"
+#~ msgstr "官方用量"
+
 #: src/components/billing/billing-chart.tsx
 #: src/components/billing/history-table.tsx
 msgid "官方累计"
@@ -365,6 +378,10 @@ msgstr "官方累计费用"
 #: src/components/billing/billing-chart.tsx
 msgid "官方账单 + 预测"
 msgstr "官方账单 + 预测"
+
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "官方费用"
+#~ msgstr "官方费用"
 
 #: src/utils/display-text.ts
 msgid "小时"
@@ -383,8 +400,12 @@ msgid "尚未采集用量"
 msgstr "尚未采集用量"
 
 #: src/components/billing/history-table.tsx
-msgid "差值"
-msgstr "差值"
+#~ msgid "差值"
+#~ msgstr "差值"
+
+#: src/pages/billing/history-page.tsx
+#~ msgid "差值为本地独立估算减去官方账单；累计差值包含之前每天的偏差，当日新增差值为相邻两天累计差值之差。点击日期查看各计费项的用量和费用差异。"
+#~ msgstr "差值为本地独立估算减去官方账单；累计差值包含之前每天的偏差，当日新增差值为相邻两天累计差值之差。点击日期查看各计费项的用量和费用差异。"
 
 #: src/components/billing/notification-language.tsx
 #~ msgid "已保存，下次发送时生效。"
@@ -414,12 +435,15 @@ msgstr "当前账期第 {value0} 天，共 {value1} 天"
 msgid "当前费用"
 msgstr "当前费用"
 
+#: src/components/billing/history-table.tsx
+msgid "当日新增差值"
+msgstr "当日新增差值"
+
 #: src/utils/display-text.ts
 msgid "当日服务明细加载失败"
 msgstr "当日服务明细加载失败"
 
 #: src/pages/billing/daily-meter-trend-page.tsx
-#: src/pages/billing/daily-services-page.tsx
 msgid "当日用量"
 msgstr "当日用量"
 
@@ -427,13 +451,21 @@ msgstr "当日用量"
 msgid "当日用量待采集"
 msgstr "当日用量待采集"
 
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日用量核对"
+msgstr "当日用量核对"
+
 #: src/pages/billing/daily-meter-trend-page.tsx
 msgid "当日累计费用"
 msgstr "当日累计费用"
 
 #: src/pages/billing/daily-services-page.tsx
-msgid "当日费用"
-msgstr "当日费用"
+#~ msgid "当日费用"
+#~ msgstr "当日费用"
+
+#: src/pages/billing/daily-services-page.tsx
+msgid "当日费用核对"
+msgstr "当日费用核对"
 
 #: src/pages/billing/daily-services-page.tsx
 msgid "当日超额用量"
@@ -683,6 +715,14 @@ msgstr "每日明细"
 msgid "每日核对"
 msgstr "每日核对"
 
+#: src/components/billing/history-table.tsx
+msgid "每日费用"
+msgstr "每日费用"
+
+#: src/pages/billing/history-page.tsx
+#~ msgid "每日费用优先使用相邻两天的官方累计差额；官方数据不足时使用本地估算。今日费用为截至最近采集时的估算，日期按 UTC 计费日展示。"
+#~ msgstr "每日费用优先使用相邻两天的官方累计差额；官方数据不足时使用本地估算。今日费用为截至最近采集时的估算，日期按 UTC 计费日展示。"
+
 #: src/utils/resource-trend-series.ts
 msgid "汇总"
 msgstr "汇总"
@@ -716,6 +756,10 @@ msgstr "用量估算"
 msgid "用量图表"
 msgstr "用量图表"
 
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "用量差值"
+#~ msgstr "用量差值"
+
 #: src/pages/billing/overview-page.tsx
 msgid "用量待补全"
 msgstr "用量待补全"
@@ -743,6 +787,10 @@ msgstr "等待账期信息"
 #: src/pages/settings/settings-page.tsx
 msgid "签名密钥"
 msgstr "签名密钥"
+
+#: src/components/billing/history-table.tsx
+msgid "累计差值"
+msgstr "累计差值"
 
 #: src/components/billing/service-trend-chart.tsx
 msgid "累计用量"
@@ -858,6 +906,10 @@ msgstr "费用"
 #: src/components/billing/service-trend-panel.tsx
 msgid "费用图表"
 msgstr "费用图表"
+
+#: src/pages/billing/daily-services-page.tsx
+#~ msgid "费用差值"
+#~ msgstr "费用差值"
 
 #: src/utils/display-text.ts
 msgid "资源明细仅有小时采样；10 分钟汇总使用已保存的采集快照。"

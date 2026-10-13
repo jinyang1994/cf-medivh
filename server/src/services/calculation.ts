@@ -4,6 +4,8 @@ import type { BillingCycle, MeterPricing, ServiceSummary, UsageReport } from '@/
 
 export const money = (value: number): number =>
   Math.round((value + Number.EPSILON) * 1_000_000) / 1_000_000;
+/** Audit differences can be smaller than the six-decimal estimate itself. */
+export const auditDifference = (value: number): number => Math.round(value * 1e12) / 1e12;
 export interface Calculation {
   total: number;
   complete: boolean;
