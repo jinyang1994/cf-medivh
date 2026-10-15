@@ -90,6 +90,7 @@ Cloudflare 的 [Billable Usage API](https://blog.cloudflare.com/billable-usage-a
 | 飞书通知     | 每轮采集发送汇总；当天用量采集失败时发送失败通知                |
 | 超限 Webhook | 当前账期费用超过自定义阈值时，向指定地址发送事件                |
 | 本地持久化   | 保存历史数据、采集进度和待发通知，支持重启后继续采集            |
+| Agent 查询   | 通过只读 MCP 查询费用汇总、服务明细、历史账单及资源用量         |
 
 目前已接入 Workers（请求、CPU、Dynamic Workers）、Workers Logs、Workers Builds、Containers、Durable Objects、R2、Queues、D1 和 Workers KV 的相关计费项。
 
@@ -173,19 +174,25 @@ npm start
 
 ### 3. 配置项
 
-| 配置                     | 说明                                                                             |
-| ------------------------ | -------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`   | 必填，访问 Cloudflare API 的 Token                                               |
-| `CLOUDFLARE_ACCOUNT_ID`  | 必填，要监控的账户 ID                                                            |
-| `HOST`                   | 本地运行默认 `127.0.0.1`；Compose 在容器内固定为 `0.0.0.0`                       |
-| `PORT`                   | 本地运行默认 `8788`；Compose 固定使用 `8788`                                     |
-| `DATABASE_PATH`          | 本地默认 `./data/billing.sqlite`，相对路径以项目根目录为基准；Compose 使用持久卷 |
-| `FEISHU_WEBHOOK_URL`     | 可选，飞书群自定义机器人的 Webhook；留空则关闭飞书通知                           |
-| `FEISHU_SIGNING_SECRET`  | 可选，飞书机器人启用签名校验时填写，需同时配置 Webhook                           |
-| `BUDGET_WEBHOOK_URL`     | 可选，接收账单超限事件的 HTTP/HTTPS 地址                                         |
-| `BUDGET_THRESHOLD_CENTS` | 可选，正整数美分阈值；`30000` 表示 300 美元，需与超限 Webhook 同时配置           |
+| 配置                     | 说明                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`   | 必填，访问 Cloudflare API 的 Token                                                           |
+| `CLOUDFLARE_ACCOUNT_ID`  | 必填，要监控的账户 ID                                                                        |
+| `HOST`                   | 本地运行默认 `127.0.0.1`；Compose 在容器内固定为 `0.0.0.0`                                   |
+| `PORT`                   | 本地运行默认 `8788`；Compose 固定使用 `8788`                                                 |
+| `DATABASE_PATH`          | 本地默认 `./data/billing.sqlite`，相对路径以项目根目录为基准；Compose 使用持久卷             |
+| `MCP_TOKEN`              | 可选，未保存 MCP 页面配置时使用的备用密钥，至少 32 个可见 ASCII 字符且不含空白；页面配置优先 |
+| `MCP_ALLOWED_ORIGINS`    | 可选，逗号分隔的完整 HTTP(S) Origin；留空时拒绝携带 `Origin` 请求头的请求                    |
+| `FEISHU_WEBHOOK_URL`     | 可选，飞书群自定义机器人的 Webhook；留空则关闭飞书通知                                       |
+| `FEISHU_SIGNING_SECRET`  | 可选，飞书机器人启用签名校验时填写，需同时配置 Webhook                                       |
+| `BUDGET_WEBHOOK_URL`     | 可选，接收账单超限事件的 HTTP/HTTPS 地址                                                     |
+| `BUDGET_THRESHOLD_CENTS` | 可选，正整数美分阈值；`30000` 表示 300 美元，需与超限 Webhook 同时配置                       |
 
-当前页面和 API 没有内置登录验证。默认配置用于本机访问，需要对外部署时请在入口配置访问认证。
+当前页面和 `/api` 路由（包括 Token 管理）没有内置登录验证，MCP Token 仅保护 `/mcp`。默认配置用于本机访问，需要对外部署时请在入口配置访问认证。
+
+Agent 接入时，通过页面右上角齿轮进入设置，在 MCP 区域生成 Token，复制妥善保管后点击“保存设置”使其生效。完整 Token 仅在本次页面访问中显示。生成只创建待保存草稿：保存前旧 Token 继续有效，新 Token 尚不可用；刷新或离开页面会丢弃未保存更改。保存成功后，让支持 Streamable HTTP 的 MCP 客户端连接页面显示的地址（通常为 `http://127.0.0.1:8788/mcp`），携带 `Authorization: Bearer <MCP_TOKEN>`，无需修改 `.env` 或重启服务。停用 MCP 也需要保存后才撤销访问，重启不会被已有 `MCP_TOKEN` 配置重新启用。
+
+端点复用现有后端，只查询已保存的费用数据，不会触发采集。已有部署在未保存 MCP 页面配置时，仍可使用 `MCP_TOKEN`。启用步骤、客户端配置、连接验证及常见问题见 [MCP 接入操作指南](docs/mcp.zh-CN.md)（[English](docs/mcp.md)）。
 
 ### 4. 配置飞书通知（可选）
 

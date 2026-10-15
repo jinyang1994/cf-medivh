@@ -23,7 +23,7 @@ const collector = new Collector(
       notificationLanguage(store),
     ),
 );
-const app = createApp(store, collector, resolve(root, 'web/dist'), config);
+const app = createApp(store, collector, resolve(root, 'web/dist'), config, config.mcp);
 app.on('error', (error: Error) => console.error('HTTP request failed:', error.message));
 const server = app.listen(port, host, () =>
   console.log(`Cloudflare billing: http://${host}:${port}`),

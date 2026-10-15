@@ -103,6 +103,30 @@ msgstr "KV 存储"
 msgid "KV 读取单位"
 msgstr "KV 读取单位"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "MCP 已停用"
+msgstr "MCP 已停用"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "MCP 已启用"
+msgstr "MCP 已启用"
+
+#: src/components/settings/mcp-settings.tsx
+#~ msgid "MCP 操作失败，请重试。若密钥已更新但未显示，请重新生成。"
+#~ msgstr "MCP 操作失败，请重试。若密钥已更新但未显示，请重新生成。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "MCP 更改仅在点击“保存设置”后生效。离开或刷新页面将丢弃未保存的更改。"
+msgstr "MCP 更改仅在点击“保存设置”后生效。离开或刷新页面将丢弃未保存的更改。"
+
+#: src/components/settings/mcp-settings.tsx
+#~ msgid "MCP 设置加载失败"
+#~ msgstr "MCP 设置加载失败"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "MCP 访问"
+msgstr "MCP 访问"
+
 #: src/utils/display-text.ts
 msgid "R2 存储按每天峰值折算 GB-months，资源图按日展示。"
 msgstr "R2 存储按每天峰值折算 GB-months，资源图按日展示。"
@@ -131,7 +155,6 @@ msgstr "下次采集"
 #~ msgid "主数值为本地独立估算，差值为本地减去官方。官方用量取自当日账单原始记录；缺少记录时显示“—”，不当作零。"
 #~ msgstr "主数值为本地独立估算，差值为本地减去官方。官方用量取自当日账单原始记录；缺少记录时显示“—”，不当作零。"
 
-#: src/components/billing/history-table.tsx
 #: src/pages/billing/overview-page.tsx
 msgid "今日"
 msgstr "今日"
@@ -175,6 +198,22 @@ msgstr "保存后覆盖环境变量中的通知配置，无需重启。停用后
 #: src/pages/settings/settings-page.tsx
 msgid "保存设置"
 msgstr "保存设置"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "停用 MCP"
+msgstr "停用 MCP"
+
+#: src/components/settings/mcp-settings.tsx
+#~ msgid "停用后当前密钥立即失效，所有 Agent 将无法查询费用。"
+#~ msgstr "停用后当前密钥立即失效，所有 Agent 将无法查询费用。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "停用待保存。点击“保存设置”后停用，保存前当前密钥继续有效。"
+msgstr "停用待保存。点击“保存设置”后停用，保存前当前密钥继续有效。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "允许 Agent 通过 MCP 只读查询费用明细。"
+msgstr "允许 Agent 通过 MCP 只读查询费用明细。"
 
 #: src/pages/billing/services-page.tsx
 msgid "免费额度"
@@ -272,6 +311,14 @@ msgstr "单价"
 msgid "历史官方累计"
 msgstr "历史官方累计"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "取消"
+msgstr "取消"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "取消 MCP 更改"
+msgstr "取消 MCP 更改"
+
 #: src/pages/settings/settings-page.tsx
 msgid "可选"
 msgstr "可选"
@@ -342,6 +389,14 @@ msgstr "图表粒度"
 msgid "基础"
 msgstr "基础"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "处理中…"
+msgstr "处理中…"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "复制"
+msgstr "复制"
+
 #: src/utils/display-text.ts
 msgid "大洋洲、韩国及台湾出站流量"
 msgstr "大洋洲、韩国及台湾出站流量"
@@ -383,6 +438,14 @@ msgstr "官方账单 + 预测"
 #~ msgid "官方费用"
 #~ msgstr "官方费用"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "客户端使用 Streamable HTTP，并在 Authorization 请求头中填写 Bearer 加空格和密钥。"
+msgstr "客户端使用 Streamable HTTP，并在 Authorization 请求头中填写 Bearer 加空格和密钥。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "密钥生成失败，请重试。当前已保存的密钥不受影响。"
+msgstr "密钥生成失败，请重试。当前已保存的密钥不受影响。"
+
 #: src/utils/display-text.ts
 msgid "小时"
 msgstr "小时"
@@ -410,6 +473,14 @@ msgstr "尚未采集用量"
 #: src/components/billing/notification-language.tsx
 #~ msgid "已保存，下次发送时生效。"
 #~ msgstr "已保存，下次发送时生效。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "已保存的密钥仅显示脱敏预览。若已遗失，请重新生成并更新客户端。"
+msgstr "已保存的密钥仅显示脱敏预览。若已遗失，请重新生成并更新客户端。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "已复制"
+msgstr "已复制"
 
 #: src/pages/settings/settings-page.tsx
 msgid "已配置，留空保留"
@@ -475,6 +546,10 @@ msgstr "当日超额用量"
 msgid "当日趋势加载失败"
 msgstr "当日趋势加载失败"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "待保存密钥"
+msgstr "待保存密钥"
+
 #: src/components/billing/history-table.tsx
 msgid "待同步"
 msgstr "待同步"
@@ -523,6 +598,18 @@ msgstr "数据提示"
 #: src/components/billing/resource-usage-trend.tsx
 msgid "数据说明"
 msgstr "数据说明"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "新密钥仅在点击“保存设置”后生效，届时旧密钥失效，已连接的 Agent 需要更新密钥。"
+msgstr "新密钥仅在点击“保存设置”后生效，届时旧密钥失效，已连接的 Agent 需要更新密钥。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "新密钥待保存。点击“保存设置”后启用 MCP。"
+msgstr "新密钥待保存。点击“保存设置”后启用 MCP。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "新密钥待保存。点击“保存设置”后生效，保存前旧密钥继续有效。"
+msgstr "新密钥待保存。点击“保存设置”后生效，保存前旧密钥继续有效。"
 
 #: src/pages/billing/daily-services-page.tsx
 msgid "无免费额度"
@@ -731,6 +818,10 @@ msgstr "汇总"
 #~ msgid "清除已保存的签名密钥"
 #~ msgstr "清除已保存的签名密钥"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "点击“保存设置”后才会停用 MCP，保存前当前密钥继续有效。"
+msgstr "点击“保存设置”后才会停用 MCP，保存前当前密钥继续有效。"
+
 #: src/components/billing/resource-usage-trend.tsx
 msgid "点击下方图例显示{value0}曲线。"
 msgstr "点击下方图例显示{value0}曲线。"
@@ -742,6 +833,18 @@ msgstr "点击下方图例显示曲线。"
 #: src/components/billing/notification-language.tsx
 #~ msgid "独立于页面语言，对所有设备生效。"
 #~ msgstr "独立于页面语言，对所有设备生效。"
+
+#: src/components/settings/mcp-settings.tsx
+#~ msgid "生成、重置或停用立即生效，无需保存设置或重启服务。"
+#~ msgstr "生成、重置或停用立即生效，无需保存设置或重启服务。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "生成密钥"
+msgstr "生成密钥"
+
+#: src/components/settings/mcp-settings.tsx
+#~ msgid "生成密钥并启用"
+#~ msgstr "生成密钥并启用"
 
 #: src/components/billing/resource-usage-trend.tsx
 #: src/components/billing/service-trend-panel.tsx
@@ -767,6 +870,14 @@ msgstr "用量待补全"
 #: src/layouts/billing-layout.tsx
 msgid "用量截至 {value0} UTC"
 msgstr "用量截至 {value0} UTC"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "确认停用"
+msgstr "确认停用"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "确认重新生成"
+msgstr "确认重新生成"
 
 #: src/utils/display-text.ts
 msgid "磁盘"
@@ -795,6 +906,10 @@ msgstr "累计差值"
 #: src/components/billing/service-trend-chart.tsx
 msgid "累计用量"
 msgstr "累计用量"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "自动复制失败，请选中密钥后手动复制。"
+msgstr "自动复制失败，请选中密钥后手动复制。"
 
 #: src/utils/display-text.ts
 msgid "计算时长"
@@ -829,6 +944,10 @@ msgstr "设置加载或保存失败"
 msgid "设置已保存"
 msgstr "设置已保存"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "访问密钥"
+msgstr "访问密钥"
+
 #: src/layouts/billing-layout.tsx
 msgid "访问我的 X 主页"
 msgstr "访问我的 X 主页"
@@ -857,6 +976,10 @@ msgstr "请填写有效的飞书机器人 Webhook 地址。"
 #: src/utils/display-text.ts
 msgid "请求"
 msgstr "请求"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "请立即复制并妥善保存。完整密钥仅在本次生成后显示，离开或刷新页面后无法再次查看。"
+msgstr "请立即复制并妥善保存。完整密钥仅在本次生成后显示，离开或刷新页面后无法再次查看。"
 
 #: src/utils/display-text.ts
 msgid "读取"
@@ -967,6 +1090,10 @@ msgstr "近 48 小时"
 msgid "返回 {value0} 服务明细"
 msgstr "返回 {value0} 服务明细"
 
+#: src/components/settings/mcp-settings.tsx
+msgid "连接地址"
+msgstr "连接地址"
+
 #: src/components/billing/billing-notifications.tsx
 msgid "通知"
 msgstr "通知"
@@ -1015,6 +1142,18 @@ msgstr "采集"
 #: src/layouts/billing-layout.tsx
 msgid "采集中"
 msgstr "采集中"
+
+#: src/components/settings/mcp-settings.tsx
+#~ msgid "重新生成后旧密钥立即失效，已连接的 Agent 需要更新密钥。"
+#~ msgstr "重新生成后旧密钥立即失效，已连接的 Agent 需要更新密钥。"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "重新生成密钥"
+msgstr "重新生成密钥"
+
+#: src/components/settings/mcp-settings.tsx
+msgid "重新生成将替换待保存密钥，点击“保存设置”后才会启用 MCP。"
+msgstr "重新生成将替换待保存密钥，点击“保存设置”后才会启用 MCP。"
 
 #: src/components/billing/resource-usage-trend.tsx
 #: src/components/billing/service-trend-panel.tsx

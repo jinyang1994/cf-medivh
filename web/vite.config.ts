@@ -5,6 +5,8 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 
+const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8788';
+
 export default defineConfig({
   // Keep Babel in sync with tests: Lingui 6.9 native transform leaves nested t macros unexpanded.
   plugins: [react(), lingui(), babel({ presets: [linguiTransformerBabelPreset()] }), tailwindcss()],
@@ -16,6 +18,6 @@ export default defineConfig({
   },
   server: {
     host: '127.0.0.1',
-    proxy: { '/api': process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8788' },
+    proxy: { '/api': apiProxyTarget, '/mcp': apiProxyTarget },
   },
 });

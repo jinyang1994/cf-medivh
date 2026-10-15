@@ -88,6 +88,7 @@ The combined estimate uses the official historical bill, which limits the impact
 | Feishu notifications | Send a summary after each collection round, or a failure notification when today's usage collection fails                        |
 | Budget webhook       | Send an event to a configured endpoint when the current cycle cost exceeds a custom threshold                                    |
 | Local persistence    | Preserve history, collection progress, and pending notifications across restarts                                                 |
+| Agent queries        | Query billing summaries, service details, history, and resource usage through a read-only MCP endpoint                           |
 
 Supported meters cover Workers (requests, CPU, Dynamic Workers), Workers Logs, Workers Builds, Containers, Durable Objects, R2, Queues, D1, and Workers KV.
 
@@ -177,19 +178,25 @@ The first startup collects current usage and backfills the current billing cycle
 
 ### 3. Configuration
 
-| Variable                 | Description                                                                                                      |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`   | Required Cloudflare API token                                                                                    |
-| `CLOUDFLARE_ACCOUNT_ID`  | Required ID of the account to monitor                                                                            |
-| `HOST`                   | Defaults to `127.0.0.1` locally; Compose sets `0.0.0.0` inside the container                                     |
-| `PORT`                   | Defaults to `8788` locally; Compose uses `8788`                                                                  |
-| `DATABASE_PATH`          | Defaults to `./data/billing.sqlite` locally, relative to the project root; Compose uses a persistent volume      |
-| `FEISHU_WEBHOOK_URL`     | Optional Feishu group custom bot webhook; leave empty to disable Feishu notifications                            |
-| `FEISHU_SIGNING_SECRET`  | Optional signing secret when signature verification is enabled; requires a webhook URL                           |
-| `BUDGET_WEBHOOK_URL`     | Optional HTTP/HTTPS endpoint for budget-exceeded events                                                          |
-| `BUDGET_THRESHOLD_CENTS` | Optional positive integer threshold in cents; `30000` means USD 300. Configure together with the budget webhook. |
+| Variable                 | Description                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`   | Required Cloudflare API token                                                                                                   |
+| `CLOUDFLARE_ACCOUNT_ID`  | Required ID of the account to monitor                                                                                           |
+| `HOST`                   | Defaults to `127.0.0.1` locally; Compose sets `0.0.0.0` inside the container                                                    |
+| `PORT`                   | Defaults to `8788` locally; Compose uses `8788`                                                                                 |
+| `DATABASE_PATH`          | Defaults to `./data/billing.sqlite` locally, relative to the project root; Compose uses a persistent volume                     |
+| `MCP_TOKEN`              | Optional fallback token for `/mcp`, at least 32 visible ASCII characters without whitespace; saved MCP settings take precedence |
+| `MCP_ALLOWED_ORIGINS`    | Optional comma-separated exact HTTP(S) origins; empty rejects requests with an `Origin` header                                  |
+| `FEISHU_WEBHOOK_URL`     | Optional Feishu group custom bot webhook; leave empty to disable Feishu notifications                                           |
+| `FEISHU_SIGNING_SECRET`  | Optional signing secret when signature verification is enabled; requires a webhook URL                                          |
+| `BUDGET_WEBHOOK_URL`     | Optional HTTP/HTTPS endpoint for budget-exceeded events                                                                         |
+| `BUDGET_THRESHOLD_CENTS` | Optional positive integer threshold in cents; `30000` means USD 300. Configure together with the budget webhook.                |
 
-The UI and API have no built-in authentication. Defaults are intended for local access. Configure authentication at the entry point if exposing the service externally.
+The UI and `/api` routes, including token management, have no built-in authentication. MCP tokens protect only `/mcp`. Defaults are intended for local access. Configure authentication at the entry point if exposing the service externally.
+
+For agent access, open Settings (the gear icon in the header), generate a token in the MCP section, and click **Save settings** to activate it. Copy the token while it is shown: the full value is available only during this page visit. Generation creates an unsaved draft; the old token remains valid until settings are saved, and the new token cannot be used yet. Refreshing or leaving the page discards unsaved changes. After saving, connect a Streamable HTTP MCP client to the displayed address, normally `http://127.0.0.1:8788/mcp`, with `Authorization: Bearer <MCP_TOKEN>`. No `.env` change or restart is needed. Disabling MCP also takes effect only after saving and remains in effect after a restart, even if `MCP_TOKEN` is set.
+
+The endpoint runs in the existing backend and reads saved billing data without triggering collection. Existing deployments can continue using `MCP_TOKEN` until MCP is configured in Settings. See the [MCP setup guide](docs/mcp.md) for step-by-step setup, client configuration, verification, and troubleshooting ([简体中文](docs/mcp.zh-CN.md)).
 
 ### 4. Feishu notifications (optional)
 

@@ -1,6 +1,15 @@
-import { readBudgetWebhookConfig, readFeishuConfig, type loadConfig } from '@/config';
+import {
+  readBudgetWebhookConfig,
+  readFeishuConfig,
+  type loadConfig,
+  type McpConfig,
+} from '@/config';
 import type { Store } from '@/repositories/billing-store';
 import { notificationLanguage, setNotificationLanguage } from '@/services/notification-settings';
+import { mcpSettings, prepareMcpSettings, savePreparedMcpSettings } from '@/services/mcp-settings';
+import { maskSecret } from '@/services/secret-preview';
+
+export { maskSecret } from '@/services/secret-preview';
 
 export type NotificationDefaults = Pick<ReturnType<typeof loadConfig>, 'feishu' | 'budgetWebhook'>;
 const key = 'runtimeNotificationSettings';
@@ -26,18 +35,16 @@ export function runtimeSettings(store: Store, defaults: NotificationDefaults): S
     },
   };
 }
-export function maskSecret(secret: string): string {
-  if (!secret) return '';
-  const characters = Array.from(secret);
-  return characters.length > 8
-    ? `${characters.slice(0, 4).join('')}••••••••${characters.slice(-4).join('')}`
-    : '••••••••';
-}
-export function publicSettings(store: Store, defaults: NotificationDefaults) {
+export function publicSettings(
+  store: Store,
+  defaults: NotificationDefaults,
+  mcpConfig?: McpConfig,
+) {
   const settings = runtimeSettings(store, defaults);
   return {
     language: notificationLanguage(store),
     hideSocialIcons: settings.hideSocialIcons,
+    mcp: mcpSettings(store, mcpConfig),
     feishu: {
       enabled: settings.feishu.enabled,
       webhookConfigured: !!settings.feishu.webhookUrl,
@@ -82,8 +89,14 @@ function replacement(value: unknown, previous: string): string {
   if (typeof value !== 'string' || value.length > 4096) throw new Error('invalid_settings');
   return value.trim() || previous;
 }
-export function saveRuntimeSettings(store: Store, defaults: NotificationDefaults, input: unknown) {
-  const data = record(input, ['language', 'hideSocialIcons', 'feishu', 'budget']);
+export function saveRuntimeSettings(
+  store: Store,
+  defaults: NotificationDefaults,
+  input: unknown,
+  mcpConfig?: McpConfig,
+) {
+  const data = record(input, ['language', 'hideSocialIcons', 'feishu', 'budget', 'mcp']);
+  const preparedMcp = prepareMcpSettings(data.mcp);
   if (data.language !== 'en' && data.language !== 'zh-CN') throw new Error('invalid_language');
   const feishu = record(data.feishu, [
     'enabled',
@@ -143,10 +156,12 @@ export function saveRuntimeSettings(store: Store, defaults: NotificationDefaults
   try {
     store.set(key, JSON.stringify(settings));
     setNotificationLanguage(store, data.language);
+    savePreparedMcpSettings(store, preparedMcp);
+    const result = publicSettings(store, defaults, mcpConfig);
     store.db.exec('COMMIT');
+    return result;
   } catch (error) {
     store.db.exec('ROLLBACK');
     throw error;
   }
-  return publicSettings(store, defaults);
 }

@@ -1,6 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import {
+  McpSettingsCard,
+  type McpDraft,
+  type McpSettings,
+} from '@/components/settings/mcp-settings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -28,6 +33,7 @@ import type { Locale } from '@/utils/locale';
 type Settings = {
   language: Locale;
   hideSocialIcons: boolean;
+  mcp: McpSettings;
   feishu: {
     enabled: boolean;
     webhookConfigured: boolean;
@@ -61,6 +67,10 @@ export function SettingsPage() {
   );
   const [errorCode, setErrorCode] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [mcpDraft, setMcpDraft] = useState<McpDraft | null>(null);
+  const [savedMcpToken, setSavedMcpToken] = useState('');
+  const [generatingMcpToken, setGeneratingMcpToken] = useState(false);
+  const pendingOperation = useRef<'generating' | 'saving' | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     void fetch('/api/settings', {
@@ -97,9 +107,39 @@ export function SettingsPage() {
       }),
     [i18n],
   );
+  const changeMcpDraft = (draft: McpDraft | null) => {
+    if (pendingOperation.current) return;
+    setMcpDraft(draft);
+    if (status === 'saved') setStatus('ready');
+  };
+  const generateMcpToken = async () => {
+    if (pendingOperation.current) throw new Error('Another operation is pending');
+    pendingOperation.current = 'generating';
+    setGeneratingMcpToken(true);
+    try {
+      const response = await fetch('/api/settings/mcp/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) throw new Error('Failed to generate MCP token');
+      const data = (await response.json()) as { token?: unknown };
+      if (typeof data.token !== 'string' || !/^[a-f0-9]{64}$/.test(data.token)) {
+        throw new Error('Invalid MCP token');
+      }
+      // A generated token is only a draft until the settings PUT succeeds.
+      setMcpDraft({ action: 'rotate', token: data.token });
+      if (status === 'saved') setStatus('ready');
+    } finally {
+      pendingOperation.current = null;
+      setGeneratingMcpToken(false);
+    }
+  };
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    if (!settings || status === 'saving') return;
+    if (!settings || pendingOperation.current) return;
+    pendingOperation.current = 'saving';
     setStatus('saving');
     try {
       const response = await fetch('/api/settings', {
@@ -109,6 +149,7 @@ export function SettingsPage() {
         body: JSON.stringify({
           language: settings.language,
           hideSocialIcons: settings.hideSocialIcons,
+          mcp: mcpDraft ?? undefined,
           feishu: {
             enabled: settings.feishu.enabled,
             webhookUrl: feishuUrl,
@@ -129,6 +170,10 @@ export function SettingsPage() {
         return;
       }
       setSettings(data);
+      if (mcpDraft) {
+        setSavedMcpToken(mcpDraft.action === 'rotate' ? mcpDraft.token : '');
+        setMcpDraft(null);
+      }
       applySavedLanguage(data.language);
       applySavedAppearance(data.hideSocialIcons);
       setFeishuUrl(data.feishu.webhookUrl);
@@ -139,6 +184,8 @@ export function SettingsPage() {
     } catch {
       setErrorCode('save');
       setStatus('error');
+    } finally {
+      pendingOperation.current = null;
     }
   };
   const error =
@@ -179,61 +226,71 @@ export function SettingsPage() {
           }}
           className="w-full space-y-6"
         >
-          <FieldSet
-            disabled={status === 'saving'}
-            className="grid items-start gap-6 disabled:opacity-60 lg:grid-cols-2"
-          >
+          <div className="grid items-start gap-6 lg:grid-cols-2">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    <Trans>基础</Trans>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="application-language">
-                        <Trans>语言</Trans>
-                      </FieldLabel>
-                      <Select
-                        value={settings.language}
-                        onValueChange={(value) => {
-                          if (value === 'en' || value === 'zh-CN') {
-                            setSettings({ ...settings, language: value });
+              <FieldSet disabled={status === 'saving'} className="gap-6 disabled:opacity-60">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <Trans>基础</Trans>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FieldGroup>
+                      <Field>
+                        <FieldLabel htmlFor="application-language">
+                          <Trans>语言</Trans>
+                        </FieldLabel>
+                        <Select
+                          value={settings.language}
+                          onValueChange={(value) => {
+                            if (value === 'en' || value === 'zh-CN') {
+                              setSettings({ ...settings, language: value });
+                              if (status === 'saved') setStatus('ready');
+                            }
+                          }}
+                          disabled={status === 'saving'}
+                        >
+                          <SelectTrigger id="application-language">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent position="popper">
+                            <SelectGroup>
+                              <SelectItem value="zh-CN">简体中文</SelectItem>
+                              <SelectItem value="en">English</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field orientation="horizontal">
+                        <Checkbox
+                          id="hide-social-icons"
+                          checked={settings.hideSocialIcons}
+                          disabled={status === 'saving'}
+                          onCheckedChange={(checked) => {
+                            setSettings({ ...settings, hideSocialIcons: checked === true });
                             if (status === 'saved') setStatus('ready');
-                          }
-                        }}
-                        disabled={status === 'saving'}
-                      >
-                        <SelectTrigger id="application-language">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent position="popper">
-                          <SelectGroup>
-                            <SelectItem value="zh-CN">简体中文</SelectItem>
-                            <SelectItem value="en">English</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id="hide-social-icons"
-                        checked={settings.hideSocialIcons}
-                        disabled={status === 'saving'}
-                        onCheckedChange={(checked) => {
-                          setSettings({ ...settings, hideSocialIcons: checked === true });
-                          if (status === 'saved') setStatus('ready');
-                        }}
-                      />
-                      <FieldLabel htmlFor="hide-social-icons">
-                        <Trans>隐藏社交图标</Trans>
-                      </FieldLabel>
-                    </Field>
-                  </FieldGroup>
-                </CardContent>
-              </Card>
+                          }}
+                        />
+                        <FieldLabel htmlFor="hide-social-icons">
+                          <Trans>隐藏社交图标</Trans>
+                        </FieldLabel>
+                      </Field>
+                    </FieldGroup>
+                  </CardContent>
+                </Card>
+              </FieldSet>
+              <McpSettingsCard
+                settings={settings.mcp}
+                draft={mcpDraft}
+                savedToken={savedMcpToken}
+                saving={status === 'saving'}
+                generating={generatingMcpToken}
+                onGenerate={generateMcpToken}
+                onDraftChange={changeMcpDraft}
+              />
+            </div>
+            <FieldSet disabled={status === 'saving'} className="gap-6 disabled:opacity-60">
               <Card>
                 <CardHeader>
                   <CardTitle>
@@ -321,77 +378,77 @@ export function SettingsPage() {
                   </FieldGroup>
                 </CardContent>
               </Card>
-            </div>
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  <Trans>预算通知</Trans>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FieldGroup>
-                  <Field orientation="horizontal">
-                    <Checkbox
-                      id="budget-enabled"
-                      disabled={status === 'saving'}
-                      checked={settings.budget.enabled}
-                      onCheckedChange={(checked) => {
-                        setSettings({
-                          ...settings,
-                          budget: { ...settings.budget, enabled: checked === true },
-                        });
-                        if (status === 'saved') setStatus('ready');
-                      }}
-                    />
-                    <FieldLabel htmlFor="budget-enabled">
-                      <Trans>启用预算通知</Trans>
-                    </FieldLabel>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="budget-webhook">
-                      <Trans>预算 Webhook 地址</Trans>
-                    </FieldLabel>
-                    <Input
-                      id="budget-webhook"
-                      type="url"
-                      autoComplete="off"
-                      value={budgetUrl}
-                      onChange={(event) => setBudgetUrl(event.target.value)}
-                      placeholder={
-                        settings.budget.webhookConfigured ? t`已配置，留空保留` : t`尚未配置`
-                      }
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="budget-threshold">
-                      <Trans>预算阈值（美元分）</Trans>
-                    </FieldLabel>
-                    <Input
-                      id="budget-threshold"
-                      aria-describedby="budget-threshold-description"
-                      type="number"
-                      min="1"
-                      max={Number.MAX_SAFE_INTEGER}
-                      step="1"
-                      required
-                      value={threshold}
-                      onChange={(event) => setThreshold(event.target.value)}
-                    />
-                    <FieldDescription id="budget-threshold-description">
-                      <Trans>30000 表示 300 美元，严格超过阈值时每账期通知一次。</Trans>
-                    </FieldDescription>
-                  </Field>
-                </FieldGroup>
-              </CardContent>
-            </Card>
-          </FieldSet>
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <Trans>预算通知</Trans>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FieldGroup>
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="budget-enabled"
+                        disabled={status === 'saving'}
+                        checked={settings.budget.enabled}
+                        onCheckedChange={(checked) => {
+                          setSettings({
+                            ...settings,
+                            budget: { ...settings.budget, enabled: checked === true },
+                          });
+                          if (status === 'saved') setStatus('ready');
+                        }}
+                      />
+                      <FieldLabel htmlFor="budget-enabled">
+                        <Trans>启用预算通知</Trans>
+                      </FieldLabel>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="budget-webhook">
+                        <Trans>预算 Webhook 地址</Trans>
+                      </FieldLabel>
+                      <Input
+                        id="budget-webhook"
+                        type="url"
+                        autoComplete="off"
+                        value={budgetUrl}
+                        onChange={(event) => setBudgetUrl(event.target.value)}
+                        placeholder={
+                          settings.budget.webhookConfigured ? t`已配置，留空保留` : t`尚未配置`
+                        }
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="budget-threshold">
+                        <Trans>预算阈值（美元分）</Trans>
+                      </FieldLabel>
+                      <Input
+                        id="budget-threshold"
+                        aria-describedby="budget-threshold-description"
+                        type="number"
+                        min="1"
+                        max={Number.MAX_SAFE_INTEGER}
+                        step="1"
+                        required
+                        value={threshold}
+                        onChange={(event) => setThreshold(event.target.value)}
+                      />
+                      <FieldDescription id="budget-threshold-description">
+                        <Trans>30000 表示 300 美元，严格超过阈值时每账期通知一次。</Trans>
+                      </FieldDescription>
+                    </Field>
+                  </FieldGroup>
+                </CardContent>
+              </Card>
+            </FieldSet>
+          </div>
           <FieldDescription>
             <Trans>
               保存后覆盖环境变量中的通知配置，无需重启。停用后暂停发送，待发送通知会保留。
             </Trans>
           </FieldDescription>
           <div className="flex items-center gap-3">
-            <Button type="submit" disabled={status === 'saving'}>
+            <Button type="submit" disabled={status === 'saving' || generatingMcpToken}>
               {status === 'saving' ? t`保存中…` : t`保存设置`}
             </Button>
             {status === 'saved' && (

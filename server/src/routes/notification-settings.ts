@@ -7,10 +7,12 @@ import {
 import type { Middleware } from 'koa';
 import type { Store } from '@/repositories/billing-store';
 import { notificationLanguage, setNotificationLanguage } from '@/services/notification-settings';
+import type { McpConfig } from '@/config';
 
 export function notificationSettingsRoute(
   store: Store,
   defaults: NotificationDefaults = { feishu: undefined, budgetWebhook: undefined },
+  mcpConfig?: McpConfig,
 ): Middleware {
   return async (ctx, next) => {
     if (ctx.path === '/api/settings/appearance') {
@@ -29,9 +31,10 @@ export function notificationSettingsRoute(
       ctx.path !== '/api/settings/language'
     )
       return next();
+    ctx.set('Cache-Control', 'no-store');
     if (ctx.method === 'GET') {
       ctx.body = fullSettings
-        ? publicSettings(store, defaults)
+        ? publicSettings(store, defaults, mcpConfig)
         : { language: notificationLanguage(store) };
       return;
     }
@@ -41,16 +44,21 @@ export function notificationSettingsRoute(
       return;
     }
     // This shared setting must not be changed by requests from another website.
-    const origin = ctx.get('Origin');
+    const origin = ctx.req.headers.origin;
     let foreignOrigin = false;
-    if (origin) {
+    if (origin !== undefined) {
       try {
-        foreignOrigin = new URL(origin).host !== ctx.host;
+        const url = new URL(origin);
+        foreignOrigin =
+          !['http:', 'https:'].includes(url.protocol) ||
+          url.origin !== origin ||
+          url.host !== ctx.host;
       } catch {
         foreignOrigin = true;
       }
     }
-    if (foreignOrigin || ctx.get('Sec-Fetch-Site') === 'cross-site') {
+    const site = ctx.get('Sec-Fetch-Site');
+    if (foreignOrigin || (site && site !== 'same-origin' && site !== 'none')) {
       ctx.status = 403;
       ctx.body = { error: 'Cross-origin request rejected' };
       return;
@@ -77,7 +85,7 @@ export function notificationSettingsRoute(
     }
     if (fullSettings) {
       try {
-        ctx.body = saveRuntimeSettings(store, defaults, data);
+        ctx.body = saveRuntimeSettings(store, defaults, data, mcpConfig);
       } catch (error) {
         const code = error instanceof Error ? error.message : '';
         if (
@@ -87,6 +95,7 @@ export function notificationSettingsRoute(
             'invalid_threshold',
             'invalid_feishu',
             'invalid_budget',
+            'invalid_mcp',
           ].includes(code)
         )
           throw error;

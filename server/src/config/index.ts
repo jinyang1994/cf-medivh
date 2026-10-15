@@ -2,6 +2,36 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
+export interface McpConfig {
+  token?: string;
+  allowedOrigins: string[];
+}
+
+export function readMcpConfig(env: NodeJS.ProcessEnv = process.env): McpConfig | undefined {
+  const token = env.MCP_TOKEN || undefined;
+  if (token !== undefined && (token.length < 32 || /[^\x21-\x7e]/.test(token)))
+    throw new Error('MCP_TOKEN 必须至少包含 32 个可见 ASCII 字符，且不能包含空白');
+
+  const origins = env.MCP_ALLOWED_ORIGINS?.trim();
+  const allowedOrigins = origins ? origins.split(',').map((origin) => origin.trim()) : [];
+  for (const origin of allowedOrigins) {
+    let url: URL;
+    try {
+      url = new URL(origin);
+    } catch {
+      throw new Error('MCP_ALLOWED_ORIGINS 必须是逗号分隔的完整 HTTP(S) origin');
+    }
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.origin !== origin ||
+      url.hostname.includes('*')
+    )
+      throw new Error('MCP_ALLOWED_ORIGINS 只能包含完整 HTTP(S) origin，不能包含路径或通配符');
+  }
+  if (!token && !allowedOrigins.length) return undefined;
+  return { ...(token ? { token } : {}), allowedOrigins: [...new Set(allowedOrigins)] };
+}
+
 export function readFeishuConfig(env: NodeJS.ProcessEnv = process.env) {
   const webhookUrl = env.FEISHU_WEBHOOK_URL?.trim();
   const secret = env.FEISHU_SIGNING_SECRET?.trim();
@@ -75,6 +105,7 @@ export function loadConfig() {
     port,
     feishu: readFeishuConfig(),
     budgetWebhook: readBudgetWebhookConfig(),
+    mcp: readMcpConfig(),
     databasePath: resolve(root, process.env.DATABASE_PATH ?? 'data/billing.sqlite'),
   };
 }
