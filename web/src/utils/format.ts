@@ -9,6 +9,7 @@ export function money(
   return new Intl.NumberFormat(i18n.locale || 'zh-CN', {
     style: 'currency',
     currency,
+    currencyDisplay: currency === 'USD' ? 'narrowSymbol' : 'symbol',
     minimumFractionDigits: 2,
     maximumFractionDigits:
       precise === 'rate'

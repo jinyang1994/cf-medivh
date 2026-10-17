@@ -292,6 +292,51 @@ test('R2 operation classes include lifecycle transitions and usage summaries, an
   assert.match(warnings.join(' '), /UnknownFutureOperation/);
 });
 
+test('failed unsupported R2 notification probes do not block usage or add billed reads', async () => {
+  const rows: AnalyticsRow[] = [
+    {
+      dimensions: {
+        actionType: 'GetBucketNotificationConfiguration',
+        actionStatus: 'userError',
+        storageClass: 'Standard',
+      },
+      sum: { requests: 2, responseObjectSize: 0 },
+    },
+    {
+      dimensions: { actionType: 'GetObject', actionStatus: 'userError', storageClass: 'Standard' },
+      sum: { requests: 1, responseObjectSize: 0 },
+    },
+  ];
+  const converted = quantitiesFromAnalytics({ r2OperationsAdaptiveGroups: rows }, 0);
+  assert.deepEqual(converted.warnings, []);
+  assert.equal(converted.quantities.r2_class_a_operations, 0);
+  assert.equal(converted.quantities.r2_class_b_operations, 1);
+  const usage = await providerFixture({
+    graphRows: (dataset) => (dataset === 'r2OperationsAdaptiveGroups' ? rows : []),
+  }).getUsage(cycle, '2026-10-08');
+  assert.equal(usage.complete, true);
+  assert.deepEqual(usage.warnings, []);
+
+  for (const [actionType, actionStatus] of [
+    ['GetBucketNotificationConfiguration', 'success'],
+    ['UnknownFutureOperation', 'userError'],
+  ]) {
+    const unknown = await providerFixture({
+      graphRows: (dataset) =>
+        dataset === 'r2OperationsAdaptiveGroups'
+          ? [
+              {
+                dimensions: { actionType: actionType!, actionStatus: actionStatus! },
+                sum: { requests: 1, responseObjectSize: 0 },
+              },
+            ]
+          : [],
+    }).getUsage(cycle, '2026-10-08');
+    assert.equal(unknown.complete, false);
+    assert.match(unknown.warnings!.join(' '), /R2 操作尚未映射计价类别/);
+  }
+});
+
 test('R2 user-error reads are metered, matching the verified official daily bill', () => {
   const { quantities } = quantitiesFromAnalytics(
     {

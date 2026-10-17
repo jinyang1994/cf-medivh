@@ -193,6 +193,15 @@ export function quantitiesFromAnalytics(
       // Cloudflare bills user errors such as a missing object. Verified against the
       // account's daily billable-usage records; filtering to successes loses these reads.
       if (r.dimensions?.actionStatus === 'internalError') continue;
+      // R2 does not implement this S3 API, but failed probes appear in Analytics.
+      // It is absent from the billed A/B lists: https://developers.cloudflare.com/r2/pricing/
+      // Compatibility: https://developers.cloudflare.com/r2/api/s3/api/
+      // Keep unexpected successes and other unknown actions visible for review.
+      if (
+        action === 'GetBucketNotificationConfiguration' &&
+        r.dimensions?.actionStatus === 'userError'
+      )
+        continue;
       const ia = r.dimensions?.storageClass === 'InfrequentAccess';
       const aKey = ia ? 'r2_class_a_operations_infrequent_access' : 'r2_class_a_operations';
       const bKey = ia ? 'r2_class_b_operations_infrequent_access' : 'r2_class_b_operations';

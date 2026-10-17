@@ -63,11 +63,6 @@ export function HistoryTable({ data, limit }: { data: Dashboard; limit?: number 
               >
                 {date(item.date)}
               </NavLink>
-              {item.date === data.today && (
-                <Badge className="ml-2" variant="secondary">
-                  <Trans>今日</Trans>
-                </Badge>
-              )}
             </TableCell>
             <TableCell className="text-right tabular-nums">
               {money(item.dailyCost, data.currency, true)}

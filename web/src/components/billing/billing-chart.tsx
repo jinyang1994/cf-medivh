@@ -108,6 +108,7 @@ export function BillingChart({
       new Intl.NumberFormat(i18n.locale, {
         style: 'currency',
         currency: data.currency,
+        currencyDisplay: data.currency === 'USD' ? 'narrowSymbol' : 'symbol',
         minimumFractionDigits: costRange.decimals,
         maximumFractionDigits: costRange.decimals,
       }),

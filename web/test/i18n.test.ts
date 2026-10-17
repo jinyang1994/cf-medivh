@@ -48,7 +48,7 @@ test('language changes update labels, errors and money without changing canonica
   assert.equal(displayText('订阅'), '订阅');
   assert.equal(displayText('内存'), '内存');
   assert.equal(serviceTrendPath('订阅', '__base_fee'), route);
-  assert.equal(money(1), 'US$1.00');
+  assert.equal(money(1), '$1.00');
 });
 
 test('nested translation macros preserve interpolated text in both languages', () => {

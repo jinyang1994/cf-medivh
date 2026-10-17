@@ -95,7 +95,13 @@ export function ServiceTrendPlot({
     Math.max(metric === 'cost' ? 2 : 0, 1 - Math.floor(Math.log10(step))),
   );
   const axisFormat = new Intl.NumberFormat(i18n.locale, {
-    ...(metric === 'cost' ? { style: 'currency', currency: data.currency } : {}),
+    ...(metric === 'cost'
+      ? {
+          style: 'currency',
+          currency: data.currency,
+          currencyDisplay: data.currency === 'USD' ? 'narrowSymbol' : 'symbol',
+        }
+      : {}),
     maximumFractionDigits: decimals,
     minimumFractionDigits: metric === 'cost' ? decimals : 0,
   });
